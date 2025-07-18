@@ -1,5 +1,9 @@
+import 'package:drug_app/models/drug.dart';
+import 'package:drug_app/services/drug_service.dart';
+import 'package:drug_app/services/pocketbase_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:logger/web.dart';
 
 Future<void> main() async {
   await dotenv.load();
@@ -33,7 +37,19 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
+  Future<void> _test() async {
+    var pb = await getPocketBaseInstance();
+    DrugSerivice drugSerivice = DrugSerivice();
+    Drug? drug = await drugSerivice.getDrug(pb, 'x9sx98j6n7c77dm');
+    var logger = Logger();
+    if (drug != null) {
+    } else {
+      logger.e('Error: Drug not found');
+    }
+  }
+
   void _incrementCounter() {
+    _test();
     setState(() {
       _counter++;
     });
