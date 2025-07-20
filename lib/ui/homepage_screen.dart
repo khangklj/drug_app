@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 class HomePageScreen extends StatefulWidget {
   const HomePageScreen({super.key});
+  static const String routeName = "/home";
 
   @override
   State<HomePageScreen> createState() => _HomePageScreenState();
@@ -12,14 +13,11 @@ class HomePageScreen extends StatefulWidget {
 class _HomePageScreenState extends State<HomePageScreen> {
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: MaterialApp(
-        home: Scaffold(
-          bottomNavigationBar: TabBarWidget(),
-          floatingActionButton: CameraFloatingButton(),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerDocked,
-        ),
+    return MaterialApp(
+      home: Scaffold(
+        bottomNavigationBar: TabBarWidget(),
+        floatingActionButton: CameraFloatingButton(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
     );
   }

@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:drug_app/screen_routing.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -11,13 +11,14 @@ class CameraFloatingButton extends StatelessWidget {
     File? file;
     final imagePicker = ImagePicker();
 
-    void pickImage(ImageSource source) async {
+    Future<File?> pickImage(ImageSource source) async {
       final pickedFile = await imagePicker.pickImage(source: source);
 
       if (pickedFile != null) {
         file = File(pickedFile.path);
-        print(file);
+        return file;
       }
+      return null;
     }
 
     void showSourceSelectionDialog() {
@@ -39,17 +40,31 @@ class CameraFloatingButton extends StatelessWidget {
                       ListTile(
                         leading: const Icon(Icons.camera_alt),
                         title: const Text('Camera'),
-                        onTap: () {
-                          pickImage(ImageSource.camera);
-                          Navigator.pop(context);
+                        onTap: () async {
+                          final pickedFile = await pickImage(
+                            ImageSource.camera,
+                          );
+                          if (pickedFile != null && context.mounted) {
+                            Navigator.of(context).popAndPushNamed(
+                              ImageViewScreen.routeName,
+                              arguments: pickedFile,
+                            );
+                          }
                         },
                       ),
                       ListTile(
                         leading: const Icon(Icons.photo_library),
                         title: const Text('Thư viện ảnh'),
-                        onTap: () {
-                          pickImage(ImageSource.gallery);
-                          Navigator.pop(context);
+                        onTap: () async {
+                          final pickedFile = await pickImage(
+                            ImageSource.gallery,
+                          );
+                          if (pickedFile != null && context.mounted) {
+                            Navigator.of(context).popAndPushNamed(
+                              ImageViewScreen.routeName,
+                              arguments: pickedFile,
+                            );
+                          }
                         },
                       ),
                     ],
