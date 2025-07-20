@@ -1,4 +1,4 @@
-import 'package:drug_app/ui/homepage.dart';
+import 'package:drug_app/ui/homepage_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const HomePage(),
+      home: const HomePageScreen(),
     );
   }
 }
