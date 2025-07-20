@@ -4,7 +4,7 @@ import 'package:drug_app/models/drug_data.dart';
 import 'package:logger/logger.dart';
 import 'package:pocketbase/pocketbase.dart';
 
-class DrugSerivice {
+class DrugService {
   static String getImageUrl(PocketBase pb, RecordModel model, {String? thumb}) {
     final imageName = model.getStringValue('image');
     return pb.files.getUrl(model, imageName, thumb: thumb).toString();
