@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:drug_app/screen_routing.dart';
+import 'package:drug_app/services/ocr_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -45,10 +45,9 @@ class CameraFloatingButton extends StatelessWidget {
                             ImageSource.camera,
                           );
                           if (pickedFile != null && context.mounted) {
-                            Navigator.of(context).popAndPushNamed(
-                              ImageViewScreen.routeName,
-                              arguments: pickedFile,
-                            );
+                            Navigator.of(context).pop();
+                            OcrService service = OcrService();
+                            service.postImage(pickedFile);
                           }
                         },
                       ),
@@ -60,10 +59,9 @@ class CameraFloatingButton extends StatelessWidget {
                             ImageSource.gallery,
                           );
                           if (pickedFile != null && context.mounted) {
-                            Navigator.of(context).popAndPushNamed(
-                              ImageViewScreen.routeName,
-                              arguments: pickedFile,
-                            );
+                            Navigator.of(context).pop();
+                            OcrService service = OcrService();
+                            service.postImage(pickedFile);
                           }
                         },
                       ),
