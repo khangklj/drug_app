@@ -19,7 +19,6 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.dark,
       home: SafeArea(child: const HomePageScreen()),
       onGenerateRoute: (settings) {
         if (settings.name == HomePageScreen.routeName) {
