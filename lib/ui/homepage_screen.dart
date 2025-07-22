@@ -13,12 +13,10 @@ class HomePageScreen extends StatefulWidget {
 class _HomePageScreenState extends State<HomePageScreen> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        bottomNavigationBar: TabBarWidget(),
-        floatingActionButton: CameraFloatingButton(),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      ),
+    return Scaffold(
+      bottomNavigationBar: TabBarWidget(),
+      floatingActionButton: CameraFloatingButton(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
