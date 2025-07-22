@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:drug_app/shared/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screen_routing.dart';
@@ -16,10 +17,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const HomePageScreen(),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.dark,
+      home: SafeArea(child: const HomePageScreen()),
       onGenerateRoute: (settings) {
         if (settings.name == HomePageScreen.routeName) {
           return MaterialPageRoute(
