@@ -5,8 +5,8 @@ class Drug {
   final String id;
   final String name;
   final String image;
-  final List<DrugData> data;
-  final List<DrugAlias> aliases;
+  final List<DrugData>? data;
+  final List<DrugAlias>? aliases;
 
   Drug({
     required this.id,
