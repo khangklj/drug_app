@@ -1,5 +1,6 @@
 import 'package:drug_app/ui/components/camera_floating_button.dart';
 import 'package:drug_app/ui/components/tabbar_widget.dart';
+import 'package:drug_app/ui/drug/drug_list_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomePageScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
       bottomNavigationBar: TabBarWidget(),
       floatingActionButton: CameraFloatingButton(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      body: SingleChildScrollView(child: DrugListScreen()),
     );
   }
 }
