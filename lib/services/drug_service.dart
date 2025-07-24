@@ -11,6 +11,17 @@ class DrugService {
     return pb.files.getUrl(model, imageName, thumb: thumb).toString();
   }
 
+  // Helper functions
+  List<DrugAlias> _parseDrugAliases(RecordModel drugModel) {
+    final List<DrugAlias> aliasList = [];
+    final drugAliasModels = drugModel.get<List<RecordModel>>("expand.aliases");
+    for (final drugAliasModel in drugAliasModels) {
+      final alias = DrugAlias.fromJson(drugAliasModel.toJson());
+      aliasList.add(alias);
+    }
+    return aliasList;
+  }
+
   Future<List<Drug>> fetchDrugs({
     int page = 1,
     int perPage = 30,
@@ -23,14 +34,21 @@ class DrugService {
       final pb = await getPocketBaseInstance();
       final resultList = await pb
           .collection('drug')
-          .getList(page: page, perPage: perPage, filter: filter);
+          .getList(
+            page: page,
+            perPage: perPage,
+            filter: filter,
+            expand: 'aliases',
+          );
 
-      for (final model in resultList.items) {
+      for (final drugModel in resultList.items) {
+        final List<DrugAlias> aliasList = _parseDrugAliases(drugModel);
+
         final drug = Drug.fromJson(
-          model.toJson()..addAll({
-            'image': getImageUrl(pb, model, thumb: thumb),
+          drugModel.toJson()..addAll({
+            'image': getImageUrl(pb, drugModel, thumb: thumb),
             'data': null,
-            'aliases': null,
+            'aliases': aliasList,
           }),
         );
         drugs.add(drug);
@@ -61,10 +79,8 @@ class DrugService {
         final drugDataModels = drugModel.get<List<RecordModel>>("expand.data");
         for (final drugDataModel in drugDataModels) {
           final data = DrugData.fromJson(
-            drugDataModel.toJson()..addAll({
-              'image': getImageUrl(pb, drugDataModel),
-              'expand.data': 'testing',
-            }),
+            drugDataModel.toJson()
+              ..addAll({'image': getImageUrl(pb, drugDataModel)}),
           );
           dataList.add(data);
         }

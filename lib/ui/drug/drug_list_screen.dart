@@ -1,3 +1,5 @@
+import 'package:drug_app/models/drug.dart';
+import 'package:drug_app/ui/drug/drug_card_horizontal.dart';
 import 'package:drug_app/ui/drug/drug_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
@@ -34,13 +36,8 @@ class _DrugListScreenState extends State<DrugListScreen> {
         }
         return Consumer<DrugManager>(
           builder: (_, manager, __) {
-            return Image.network(
-              manager.drugs[0].image,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return const Center(child: CircularProgressIndicator());
-              },
-            );
+            final Drug testDrug = manager.drugs[0];
+            return DrugCardHorizontal(drug: testDrug);
           },
         );
       },
