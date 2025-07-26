@@ -33,6 +33,8 @@ class _DrugListScreenState extends State<DrugListScreen> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return const Placeholder();
         }
         return Consumer<DrugManager>(
           builder: (_, manager, __) {
