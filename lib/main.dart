@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:drug_app/shared/app_theme.dart';
-import 'package:drug_app/ui/drug/drug_manager.dart';
+import 'package:drug_app/manager/drug_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';

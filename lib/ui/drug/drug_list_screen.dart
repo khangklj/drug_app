@@ -1,6 +1,6 @@
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/ui/drug/drug_card_horizontal.dart';
-import 'package:drug_app/ui/drug/drug_manager.dart';
+import 'package:drug_app/manager/drug_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
