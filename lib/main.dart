@@ -1,7 +1,7 @@
 import 'dart:io';
-
 import 'package:drug_app/shared/app_theme.dart';
 import 'package:drug_app/manager/drug_manager.dart';
+import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -38,6 +38,13 @@ class MyApp extends StatelessWidget {
           final image = settings.arguments as File;
           return MaterialPageRoute(
             builder: (_) => SafeArea(child: ImageViewScreen(image: image)),
+          );
+        }
+
+        if (settings.name == DrugDetailsScreen.routeName) {
+          final drugId = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (_) => SafeArea(child: DrugDetailsScreen(drugId: drugId)),
           );
         }
         return null;

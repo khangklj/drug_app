@@ -26,4 +26,9 @@ class DrugManager with ChangeNotifier {
     );
     notifyListeners();
   }
+
+  Future<Drug?> fetchDrugDetails({required String id, String? thumb}) async {
+    final drug = await _drugService.fetchDrugDetails(id, thumb: thumb);
+    return drug;
+  }
 }

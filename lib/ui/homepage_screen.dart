@@ -1,4 +1,10 @@
+import 'dart:io';
+
+import 'package:drug_app/models/ocr_result.dart';
+import 'package:drug_app/services/ocr_service.dart';
 import 'package:drug_app/ui/components/camera_floating_button.dart';
+import 'package:drug_app/ui/components/image_source_dialog.dart';
+import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomePageScreen extends StatefulWidget {
@@ -22,6 +28,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(height: 20),
             SizedBox(
               height: 100,
               width: 100,
@@ -65,19 +72,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                           textAlign: TextAlign.center,
                         ),
                       const SizedBox(height: 8),
-                      FilledButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.camera_alt),
-                        label: Text(
-                          'Bắt đầu quét',
-                          style: Theme.of(context).textTheme.bodyLarge!
-                              .copyWith(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        style: Theme.of(context).iconButtonTheme.style,
-                      ),
+                      ScanningButton(),
                     ],
                   ),
                 ),
@@ -100,6 +95,100 @@ class _HomePageScreenState extends State<HomePageScreen> {
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class ScanningButton extends StatefulWidget {
+  const ScanningButton({super.key});
+
+  @override
+  State<ScanningButton> createState() => _ScanningButtonState();
+}
+
+class _ScanningButtonState extends State<ScanningButton> {
+  bool _isLoading = false;
+
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Dialog(
+          child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 15),
+                Text("Đang tìm kiếm thông tin thuốc..."),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: _isLoading
+          ? null
+          : () async {
+              setState(() {
+                _isLoading = true;
+              });
+              final File? file = await showDialog<File?>(
+                context: context,
+                builder: (BuildContext context) {
+                  return const ImageSourceDialog();
+                },
+              );
+
+              if (file == null) {
+                setState(() {
+                  _isLoading = false;
+                });
+                return;
+              }
+              _showLoadingDialog();
+              final OcrResult? ocrResult = await OcrService().postImage(file);
+              if (ocrResult == null || !context.mounted) {
+                setState(() {
+                  _isLoading = false;
+                });
+                return;
+              }
+
+              final itemIds = ocrResult.ids;
+              if (itemIds.isEmpty) {
+                // TODO: Implement empty result handling
+              } else if (itemIds.length == 1) {
+                await Navigator.of(context).pushNamed(
+                  DrugDetailsScreen.routeName,
+                  arguments: itemIds.first,
+                );
+                // Hide loading dialog
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+                setState(() {
+                  _isLoading = false;
+                });
+              } else {
+                // TODO: Implement multiple result handling
+              }
+            },
+      icon: const Icon(Icons.camera_alt),
+      label: Text(
+        'Bắt đầu quét',
+        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+          color: Theme.of(context).colorScheme.onPrimary,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );

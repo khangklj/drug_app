@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:drug_app/services/ocr_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -50,9 +49,9 @@ class _ImageSourceDialogState extends State<ImageSourceDialog> {
               onTap: () async {
                 final pickedFile = await pickImage(ImageSource.camera);
                 if (pickedFile != null && context.mounted) {
-                  Navigator.of(context).pop();
-                  OcrService service = OcrService();
-                  service.postImage(pickedFile);
+                  Navigator.of(context).pop(pickedFile);
+                } else if (context.mounted) {
+                  Navigator.of(context).pop(null);
                 }
               },
             ),
@@ -62,9 +61,7 @@ class _ImageSourceDialogState extends State<ImageSourceDialog> {
               onTap: () async {
                 final pickedFile = await pickImage(ImageSource.gallery);
                 if (pickedFile != null && context.mounted) {
-                  Navigator.of(context).pop();
-                  OcrService service = OcrService();
-                  service.postImage(pickedFile);
+                  Navigator.of(context).pop(pickedFile);
                 }
               },
             ),
