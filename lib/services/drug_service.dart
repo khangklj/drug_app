@@ -6,6 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class DrugService {
+  final _logger = Logger();
   static String getImageUrl(PocketBase pb, RecordModel model, {String? thumb}) {
     final imageName = model.getStringValue('image');
     return pb.files.getUrl(model, imageName, thumb: thumb).toString();
@@ -28,7 +29,6 @@ class DrugService {
     String? thumb,
     String? filter,
   }) async {
-    var logger = Logger();
     final List<Drug> drugs = [];
     try {
       final pb = await getPocketBaseInstance();
@@ -54,7 +54,7 @@ class DrugService {
         drugs.add(drug);
       }
     } catch (error) {
-      logger.e(error);
+      _logger.e(error);
     }
     return drugs;
   }
@@ -65,7 +65,6 @@ class DrugService {
     bool expandAliases = true,
     String? thumb,
   }) async {
-    var logger = Logger();
     final List<DrugData> dataList = [];
     final List<DrugAlias> aliasList = [];
 
@@ -104,8 +103,33 @@ class DrugService {
         }),
       );
     } catch (error) {
-      logger.e(error);
+      _logger.e(error);
       return null;
     }
+  }
+
+  Future<List<Drug>> fetchDrugMetadata({String? thumb}) async {
+    final List<Drug> drugsMetadata = [];
+    try {
+      final pb = await getPocketBaseInstance();
+      final recordList = await pb
+          .collection('drug')
+          .getFullList(expand: 'aliases');
+      for (final record in recordList) {
+        final List<DrugAlias> aliasList = _parseDrugAliases(record);
+        final drug = Drug.fromJson(
+          record.toJson()..addAll({
+            'image': getImageUrl(pb, record, thumb: thumb),
+            'aliases': aliasList,
+            'data': null,
+          }),
+        );
+        drugsMetadata.add(drug);
+      }
+    } catch (error) {
+      _logger.e(error);
+    }
+
+    return drugsMetadata;
   }
 }
