@@ -18,32 +18,30 @@ class DrugManager with ChangeNotifier {
     int page = 1,
     int perPage = 10,
     String? filter,
-    String? thumb = '100x100f',
   }) async {
     _drugs = await _drugService.fetchDrugs(
       page: page,
       perPage: perPage,
       filter: filter,
-      thumb: thumb,
     );
     notifyListeners();
   }
 
-  Future<Drug?> fetchDrugDetails({required String id, String? thumb}) async {
-    final drug = await _drugService.fetchDrugDetails(id, thumb: thumb);
+  Future<Drug?> fetchDrugDetails({required String id}) async {
+    final drug = await _drugService.fetchDrugDetails(id);
     return drug;
   }
 
-  Future<void> fetchDrugsMetadata({String? thumb = '100x100f'}) async {
-    _drugsMetadata = await _drugService.fetchDrugMetadata(thumb: thumb);
+  Future<void> fetchDrugsMetadata() async {
+    _drugs = await _drugService.fetchDrugMetadata();
     notifyListeners();
   }
 
   List<Drug> searchDrugsMetadata(String? query) {
     if (query == null || query.isEmpty) {
-      return _drugsMetadata;
+      return _drugs;
     }
-    return _drugsMetadata.where((drug) {
+    return _drugs.where((drug) {
       final name = drug.name.toLowerCase();
       final queryLower = query.toLowerCase();
       final aliasesMatch =

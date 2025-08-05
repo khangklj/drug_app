@@ -1,5 +1,7 @@
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/models/drug.dart';
+import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -28,19 +30,42 @@ class DrugSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildResults(BuildContext context) {
-    // TODO: implement buildResults
-    throw UnimplementedError();
+    if (query.isEmpty) {
+      return Container();
+    }
+    final DrugManager drugManager = context.read<DrugManager>();
+    List<Drug> drugs = drugManager.searchDrugsMetadata(query);
+    return DrugSearchResultsScreen(drugs: drugs, query: query);
+  }
+
+  @override
+  void showResults(BuildContext context) {
+    query = query.trim();
+    if (query.isEmpty) {
+      final snackBar = SnackBar(
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        content: AwesomeSnackbarContent(
+          title: 'Lỗi tìm kiếm',
+          message: 'Không được để trống từ khóa tìm kiếm!',
+          contentType: ContentType.failure,
+        ),
+      );
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(snackBar);
+      return;
+    }
+    super.showResults(context);
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
     final DrugManager drugManager = context.read<DrugManager>();
-    List<Drug> drugs = query.isEmpty
-        ? drugManager.drugs
-        : drugManager.searchDrugsMetadata(query);
+    List<Drug> drugs = drugManager.searchDrugsMetadata(query);
     if (query.isEmpty) {
-      // TODO: handle query is empty case
-      return const Placeholder();
+      return Container();
     } else {
       return ListView.separated(
         separatorBuilder: (context, index) => const Divider(),
@@ -51,8 +76,8 @@ class DrugSearchDelegate extends SearchDelegate {
             leading: SizedBox(
               width: 100,
               child: Image.network(
-                drug.image,
-                fit: BoxFit.fill,
+                drug.getImage(thumb: '125x125f'),
+                fit: BoxFit.cover,
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
                   return Center(
@@ -66,9 +91,8 @@ class DrugSearchDelegate extends SearchDelegate {
                 },
                 errorBuilder: (context, error, stackTrace) {
                   return const Icon(
-                    Icons.broken_image,
-                    size: 60,
-                    color: Colors.grey,
+                    Icons.image_not_supported_outlined,
+                    size: 40,
                   );
                 },
               ),
@@ -79,4 +103,7 @@ class DrugSearchDelegate extends SearchDelegate {
       );
     }
   }
+
+  @override
+  String get searchFieldLabel => 'Tìm kiếm thuốc...';
 }

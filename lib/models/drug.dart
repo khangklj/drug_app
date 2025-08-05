@@ -4,17 +4,17 @@ import 'package:drug_app/models/drug_data.dart';
 class Drug {
   final String id;
   final String name;
-  final String image;
+  final String _image;
   final List<DrugData>? data;
   final List<DrugAlias>? aliases;
 
   Drug({
     required this.id,
     required this.name,
-    required this.image,
+    required String image,
     this.data = const [],
     this.aliases = const [],
-  });
+  }) : _image = image;
   Drug copyWith({
     String? id,
     String? name,
@@ -25,7 +25,7 @@ class Drug {
     return Drug(
       id: id ?? this.id,
       name: name ?? this.name,
-      image: image ?? this.image,
+      image: image ?? _image,
       data: data ?? this.data,
       aliases: aliases ?? this.aliases,
     );
@@ -39,5 +39,14 @@ class Drug {
       data: json['data'],
       aliases: json['aliases'],
     );
+  }
+
+  String getImage({String? thumb}) {
+    if (thumb == null) return _image;
+    if (_image.contains('?thumb')) {
+      return '$_image&thumb=$thumb';
+    } else {
+      return '$_image?thumb=$thumb';
+    }
   }
 }

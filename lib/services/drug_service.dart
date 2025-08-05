@@ -108,7 +108,7 @@ class DrugService {
     }
   }
 
-  Future<List<Drug>> fetchDrugMetadata({String? thumb}) async {
+  Future<List<Drug>> fetchDrugMetadata() async {
     final List<Drug> drugsMetadata = [];
     try {
       final pb = await getPocketBaseInstance();
@@ -119,7 +119,7 @@ class DrugService {
         final List<DrugAlias> aliasList = _parseDrugAliases(record);
         final drug = Drug.fromJson(
           record.toJson()..addAll({
-            'image': getImageUrl(pb, record, thumb: thumb),
+            'image': getImageUrl(pb, record),
             'aliases': aliasList,
             'data': null,
           }),
