@@ -1,7 +1,7 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/models/drug.dart';
-import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
+import 'package:drug_app/ui/drug/drug_search_results_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -34,8 +34,8 @@ class DrugSearchDelegate extends SearchDelegate {
       return Container();
     }
     final DrugManager drugManager = context.read<DrugManager>();
-    List<Drug> drugs = drugManager.searchDrugsMetadata(query);
-    return DrugSearchResultsScreen(drugs: drugs, query: query);
+    List<Drug> drugs = drugManager.searchDrugsMetadataByQuery(query);
+    return DrugSearchResultsWidget(drugs: drugs, query: query);
   }
 
   @override
@@ -63,7 +63,7 @@ class DrugSearchDelegate extends SearchDelegate {
   @override
   Widget buildSuggestions(BuildContext context) {
     final DrugManager drugManager = context.read<DrugManager>();
-    List<Drug> drugs = drugManager.searchDrugsMetadata(query);
+    List<Drug> drugs = drugManager.searchDrugsMetadataByQuery(query);
     if (query.isEmpty) {
       return Container();
     } else {

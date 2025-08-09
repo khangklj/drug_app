@@ -5,14 +5,12 @@ import 'package:flutter/material.dart';
 class DrugManager with ChangeNotifier {
   late final DrugService _drugService;
   List<Drug> _drugs = [];
-  List<Drug> _drugsMetadata = [];
 
   DrugManager() {
     _drugService = DrugService();
   }
 
   List<Drug> get drugs => [..._drugs];
-  List<Drug> get drugsMetadata => [..._drugsMetadata];
 
   Future<void> fetchDrugs({
     int page = 1,
@@ -37,7 +35,7 @@ class DrugManager with ChangeNotifier {
     notifyListeners();
   }
 
-  List<Drug> searchDrugsMetadata(String? query) {
+  List<Drug> searchDrugsMetadataByQuery(String? query) {
     if (query == null || query.isEmpty) {
       return _drugs;
     }
@@ -51,5 +49,9 @@ class DrugManager with ChangeNotifier {
           false;
       return aliasesMatch || name.contains(queryLower);
     }).toList();
+  }
+
+  List<Drug> searchDrugsMetadataByIds(List<String> ids) {
+    return _drugs.where((drug) => ids.contains(drug.id)).toList();
   }
 }
