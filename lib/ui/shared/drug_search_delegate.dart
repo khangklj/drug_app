@@ -1,6 +1,7 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/models/drug.dart';
+import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_results_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -73,6 +74,11 @@ class DrugSearchDelegate extends SearchDelegate {
         itemBuilder: (context, index) {
           final drug = drugs[index];
           return ListTile(
+            onTap: () {
+              Navigator.of(
+                context,
+              ).pushNamed(DrugDetailsScreen.routeName, arguments: drug.id);
+            },
             leading: SizedBox(
               width: 100,
               child: Image.network(

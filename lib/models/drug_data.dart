@@ -2,7 +2,7 @@ class DrugData {
   final String id;
   final String displayName;
   final String? displayTag;
-  final String image;
+  final String _image;
   final String indications;
   final String pharmacodynamics;
   final String pharmacokinetics;
@@ -20,7 +20,7 @@ class DrugData {
     required this.id,
     required this.displayName,
     this.displayTag,
-    required this.image,
+    required String image,
     required this.indications,
     required this.pharmacodynamics,
     required this.pharmacokinetics,
@@ -33,7 +33,7 @@ class DrugData {
     required this.drivingWarnings,
     required this.interactions,
     required this.preservation,
-  });
+  }) : _image = image;
 
   DrugData copyWith({
     String? id,
@@ -57,7 +57,7 @@ class DrugData {
       id: id ?? this.id,
       displayName: displayName ?? this.displayName,
       displayTag: displayTag ?? this.displayTag,
-      image: image ?? this.image,
+      image: image ?? _image,
       indications: indications ?? this.indications,
       pharmacodynamics: pharmacodynamics ?? this.pharmacodynamics,
       pharmacokinetics: pharmacokinetics ?? this.pharmacokinetics,
@@ -93,5 +93,14 @@ class DrugData {
       interactions: json['interactions'],
       preservation: json['preservation'],
     );
+  }
+
+  String getImage({String? thumb}) {
+    if (thumb == null) return _image;
+    if (_image.contains('?thumb')) {
+      return '$_image&thumb=$thumb';
+    } else {
+      return '$_image?thumb=$thumb';
+    }
   }
 }

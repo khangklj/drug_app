@@ -13,7 +13,7 @@ class DrugCard extends StatelessWidget {
       child: InkWell(
         splashColor: Theme.of(context).splashColor,
         onTap: () {
-          //TODO: implement navigate to drug details
+          Navigator.of(context).pushNamed('/drug_details', arguments: drug.id);
         },
         child: Padding(
           padding: const EdgeInsets.all(8.0),
