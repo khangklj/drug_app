@@ -43,13 +43,20 @@ class DrugSearchResultsWidget extends StatelessWidget {
                 context,
               ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
             )
-          else
+          else ...[
             Text(
-              "Kết quả tìm kiếm cho từ khóa \"$query\"",
+              "Kết quả tìm kiếm cho từ khóa",
               style: Theme.of(
                 context,
               ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
             ),
+            Text(
+              "\"$query\"",
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ],
           const SizedBox(height: 8),
           Expanded(
             child: MasonryGridView.count(

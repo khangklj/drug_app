@@ -8,7 +8,7 @@ import 'package:drug_app/services/ocr_service.dart';
 import 'package:drug_app/ui/components/image_source_dialog.dart';
 import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
-import 'package:drug_app/ui/shared/drug_search_delegate.dart';
+import 'package:drug_app/ui/drug/drug_search_delegate.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

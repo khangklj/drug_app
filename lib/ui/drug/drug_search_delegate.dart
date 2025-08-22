@@ -68,6 +68,27 @@ class DrugSearchDelegate extends SearchDelegate {
     if (query.isEmpty) {
       return Container();
     } else {
+      if (drugs.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                height: 200,
+                child: Image.asset(
+                  'assets/icons/no_results_icon.png',
+                  semanticLabel: 'No results',
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "Không tìm thấy kết quả phù hợp",
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ],
+          ),
+        );
+      }
       return ListView.separated(
         separatorBuilder: (context, index) => const Divider(),
         itemCount: drugs.length,
