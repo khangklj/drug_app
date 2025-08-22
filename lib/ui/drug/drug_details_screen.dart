@@ -115,7 +115,9 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
       future: _fetchDrugs,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Scaffold(
+            body: const Center(child: CircularProgressIndicator()),
+          );
         } else if (snapshot.hasError) {
           showDialog(
             context: context,
