@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:drug_app/manager/search_history_manager.dart';
 import 'package:drug_app/manager/theme_manager.dart';
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/shared/app_theme.dart';
@@ -17,6 +18,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => DrugManager()),
         ChangeNotifierProvider(create: (_) => ThemeManager()),
+        ChangeNotifierProvider(create: (_) => SearchHistoryManager()),
       ],
       child: const MyApp(),
     ),
