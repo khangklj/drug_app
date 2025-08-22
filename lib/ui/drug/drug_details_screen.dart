@@ -15,12 +15,64 @@ class DrugDetailsScreen extends StatefulWidget {
 
 class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
   late Future<Drug?> _fetchDrugs;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  bool _isSearching = false;
   @override
   void initState() {
+    super.initState();
     _fetchDrugs = context.read<DrugManager>().fetchDrugDetails(
       id: widget.drugId,
     );
-    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text;
+    });
+  }
+
+  List<TextSpan> _highlightText(String text, String query) {
+    if (query.isEmpty) {
+      return [TextSpan(text: text)];
+    }
+
+    List<TextSpan> spans = [];
+    final lowerCaseText = text.toLowerCase();
+    final lowerCaseQuery = query.toLowerCase();
+    int start = 0;
+    int indexOfMatch;
+
+    while ((indexOfMatch = lowerCaseText.indexOf(lowerCaseQuery, start)) !=
+        -1) {
+      if (indexOfMatch > start) {
+        spans.add(TextSpan(text: text.substring(start, indexOfMatch)));
+      }
+      spans.add(
+        TextSpan(
+          text: text.substring(indexOfMatch, indexOfMatch + query.length),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            backgroundColor: Colors.yellow,
+            color: Colors.black,
+          ),
+        ),
+      );
+
+      start = indexOfMatch + query.length;
+    }
+
+    if (start < text.length) {
+      spans.add(TextSpan(text: text.substring(start)));
+    }
+    return spans;
   }
 
   List<Widget> convertHtmlToListWidgets(String htmlString) {
@@ -51,10 +103,15 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
               children: [
                 Text('• ', style: Theme.of(context).textTheme.bodyLarge),
                 Expanded(
-                  child: Text(
-                    listItemText.trim(),
-                    style: Theme.of(context).textTheme.bodyLarge,
+                  child: RichText(
                     textAlign: TextAlign.justify,
+                    text: TextSpan(
+                      style: Theme.of(context).textTheme.bodyLarge,
+                      children: _highlightText(
+                        listItemText.trim(),
+                        _searchQuery,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -78,12 +135,8 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
                   child: RichText(
                     textAlign: TextAlign.justify,
                     text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: paragraph,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ],
+                      style: Theme.of(context).textTheme.bodyLarge,
+                      children: _highlightText(paragraph, _searchQuery),
                     ),
                   ),
                 ),
@@ -232,9 +285,25 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
             appBar: AppBar(
               automaticallyImplyLeading: true,
               elevation: 4.0,
-              title: Text(
-                "MediApp",
-                style: Theme.of(context).textTheme.titleLarge,
+              title: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: !_isSearching
+                    ? Text(
+                        "MediApp",
+                        style: Theme.of(context).textTheme.titleLarge,
+                      )
+                    : TextField(
+                        controller: _searchController,
+                        style: Theme.of(context).textTheme.titleMedium,
+                        decoration: InputDecoration(
+                          hintText: 'Gõ từ khóa để tìm kiếm ...',
+                          border: InputBorder.none,
+                          hintStyle: Theme.of(
+                            context,
+                          ).textTheme.titleMedium!.copyWith(color: Colors.grey),
+                        ),
+                        autofocus: true,
+                      ),
               ),
               bottom: drug.data!.length > 1
                   ? TabBar(
@@ -256,6 +325,20 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
                   : null,
 
               actions: [
+                IconButton(
+                  icon: _isSearching
+                      ? const Icon(Icons.close)
+                      : const Icon(Icons.search),
+                  onPressed: () {
+                    setState(() {
+                      _isSearching = !_isSearching;
+                      if (!_isSearching) {
+                        _searchController.clear();
+                        _searchQuery = '';
+                      }
+                    });
+                  },
+                ),
                 IconButton(
                   icon: currentThemeMode == ThemeMode.light
                       ? const Icon(Icons.light_mode_outlined)
