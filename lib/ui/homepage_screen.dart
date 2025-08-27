@@ -1,11 +1,13 @@
 import 'dart:io';
 
+import 'package:drug_app/manager/drug_favorite_manager.dart';
 import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/manager/theme_manager.dart';
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/models/ocr_result.dart';
 import 'package:drug_app/services/ocr_service.dart';
 import 'package:drug_app/ui/components/image_source_dialog.dart';
+import 'package:drug_app/ui/components/medi_app_drawer.dart';
 import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_delegate.dart';
@@ -22,13 +24,15 @@ class HomePageScreen extends StatefulWidget {
 
 class _HomePageScreenState extends State<HomePageScreen> {
   late Future<void> _fetchDrugsMetadata;
+  late Future<void> _fetchFavoriteDrugs;
 
   @override
   void initState() {
-    _fetchDrugsMetadata = context
-        .read<DrugManager>()
-        .fetchDrugsMetadata(); // Fetch drugs metadata
     super.initState();
+    _fetchDrugsMetadata = context.read<DrugManager>().fetchDrugsMetadata();
+    _fetchFavoriteDrugs = context
+        .read<DrugFavoriteManager>()
+        .fetchFavoriteDrugs();
   }
 
   @override
@@ -36,7 +40,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
     int textBreakPoints = 600;
     final currentThemeMode = context.watch<ThemeManager>().themeMode;
     return FutureBuilder(
-      future: _fetchDrugsMetadata,
+      future: Future.wait([_fetchDrugsMetadata, _fetchFavoriteDrugs]),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
@@ -50,10 +54,12 @@ class _HomePageScreenState extends State<HomePageScreen> {
           appBar: AppBar(
             automaticallyImplyLeading: false,
             elevation: 4.0,
-            leading: IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () {
-                //TODO: implement appbar drawer
+            leading: Builder(
+              builder: (context) {
+                return IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                );
               },
             ),
             title: Text(
@@ -71,64 +77,69 @@ class _HomePageScreenState extends State<HomePageScreen> {
               ),
             ],
           ),
-          body: SingleChildScrollView(
-            physics: AlwaysScrollableScrollPhysics(),
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      height: 100,
-                      width: 100,
-                      child: Image.asset("assets/icons/app_icon.png"),
-                    ),
-                    Text(
-                      "MediApp",
-                      style: Theme.of(context).textTheme.displaySmall,
-                    ),
-                    Text(
-                      "Ứng dụng tra cứu thuốc tiện ích",
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    Text(
-                      "Phiên bản 1.0.0",
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    OCRSearchEntry(textBreakPoints: textBreakPoints),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: <Widget>[
-                        const Expanded(
-                          child: Divider(height: 36, thickness: 3),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: Text(
-                            'HOẶC',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                        ),
-                        const Expanded(
-                          child: Divider(height: 36, thickness: 3),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    KeywordSearchEntry(),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          drawer: MediAppDrawer(),
+          body: MainWidget(textBreakPoints: textBreakPoints),
         );
       },
+    );
+  }
+}
+
+class MainWidget extends StatelessWidget {
+  const MainWidget({super.key, required this.textBreakPoints});
+
+  final int textBreakPoints;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: AlwaysScrollableScrollPhysics(),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 20),
+              SizedBox(
+                height: 100,
+                width: 100,
+                child: Image.asset("assets/icons/app_icon.png"),
+              ),
+              Text("MediApp", style: Theme.of(context).textTheme.displaySmall),
+              Text(
+                "Ứng dụng tra cứu thuốc tiện ích",
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              Text(
+                "Phiên bản 1.0.0",
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+
+              const SizedBox(height: 20),
+
+              OCRSearchEntry(textBreakPoints: textBreakPoints),
+              const SizedBox(height: 20),
+              Row(
+                children: <Widget>[
+                  const Expanded(child: Divider(height: 36, thickness: 3)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      'HOẶC',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  const Expanded(child: Divider(height: 36, thickness: 3)),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              KeywordSearchEntry(),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

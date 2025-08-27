@@ -1,4 +1,5 @@
 import 'package:drug_app/models/drug.dart';
+import 'package:drug_app/ui/components/add_to_favorite_button.dart';
 import 'package:flutter/material.dart';
 
 class DrugCard extends StatelessWidget {
@@ -20,8 +21,9 @@ class DrugCard extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const SizedBox(height: 12),
               SizedBox(
-                width: 180,
+                width: 300,
                 child: Image.network(
                   drug.getImage(thumb: '250x250f'),
                   fit: BoxFit.fill,
@@ -59,6 +61,8 @@ class DrugCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+              const SizedBox(height: 2),
+              AddToFavoriteButton(drug: drug),
             ],
           ),
         ),

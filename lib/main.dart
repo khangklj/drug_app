@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'package:drug_app/manager/drug_favorite_manager.dart';
 import 'package:drug_app/manager/search_history_manager.dart';
 import 'package:drug_app/manager/theme_manager.dart';
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/shared/app_theme.dart';
 import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/ui/drug/drug_details_screen.dart';
+import 'package:drug_app/ui/drug/drug_favorite_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -19,6 +21,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => DrugManager()),
         ChangeNotifierProvider(create: (_) => ThemeManager()),
         ChangeNotifierProvider(create: (_) => SearchHistoryManager()),
+        ChangeNotifierProvider(create: (_) => DrugFavoriteManager()),
       ],
       child: const MyApp(),
     ),
@@ -63,6 +66,12 @@ class MyApp extends StatelessWidget {
           final drugId = settings.arguments as String;
           return MaterialPageRoute(
             builder: (_) => SafeArea(child: DrugDetailsScreen(drugId: drugId)),
+          );
+        }
+
+        if (settings.name == DrugFavoriteScreen.routeName) {
+          return MaterialPageRoute(
+            builder: (_) => SafeArea(child: DrugFavoriteScreen()),
           );
         }
         return null;

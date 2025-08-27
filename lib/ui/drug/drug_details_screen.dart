@@ -1,6 +1,7 @@
 import 'package:drug_app/manager/drug_manager.dart';
-import 'package:drug_app/manager/theme_manager.dart';
 import 'package:drug_app/models/drug.dart';
+import 'package:drug_app/models/drug_data.dart';
+import 'package:drug_app/ui/components/add_to_favorite_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -162,7 +163,6 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentThemeMode = context.watch<ThemeManager>().themeMode;
     ValueNotifier<int> index = ValueNotifier<int>(0);
     return FutureBuilder(
       future: _fetchDrugs,
@@ -192,26 +192,7 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: SizedBox(
-                      height: 300,
-                      child: Image.network(
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                  : null,
-                            ),
-                          );
-                        },
-                        fit: BoxFit.fill,
-                        drugData.getImage(),
-                      ),
-                    ),
-                  ),
+                  DrugDisplayImage(drug: drug, drugData: drugData),
                   const SizedBox(height: 20),
                   Center(
                     child: Text(
@@ -289,8 +270,9 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
                 duration: const Duration(milliseconds: 300),
                 child: !_isSearching
                     ? Text(
-                        "MediApp",
+                        drug.name,
                         style: Theme.of(context).textTheme.titleLarge,
+                        overflow: TextOverflow.ellipsis,
                       )
                     : TextField(
                         controller: _searchController,
@@ -339,20 +321,47 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
                     });
                   },
                 ),
-                IconButton(
-                  icon: currentThemeMode == ThemeMode.light
-                      ? const Icon(Icons.light_mode_outlined)
-                      : const Icon(Icons.dark_mode_outlined),
-                  onPressed: () {
-                    context.read<ThemeManager>().toggleTheme();
-                  },
-                ),
+                AddToFavoriteButton(drug: drug),
               ],
             ),
             body: TabBarView(children: tabBarContents),
           ),
         );
       },
+    );
+  }
+}
+
+class DrugDisplayImage extends StatelessWidget {
+  const DrugDisplayImage({
+    super.key,
+    required this.drug,
+    required this.drugData,
+  });
+  final DrugData drugData;
+  final Drug drug;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SizedBox(
+        height: 300,
+        child: Image.network(
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                          loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            );
+          },
+          fit: BoxFit.fill,
+          drugData.getImage(),
+        ),
+      ),
     );
   }
 }

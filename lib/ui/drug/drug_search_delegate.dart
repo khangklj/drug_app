@@ -115,8 +115,8 @@ class DrugSearchDelegate extends SearchDelegate {
                         textAlign: TextAlign.center,
                         MediaQuery.of(context).orientation ==
                                 Orientation.portrait
-                            ? "Tips 💡: Xóa lịch sử tìm kiếm\nbằng cách vuốt từ trái sang phải"
-                            : "Tips 💡: Xóa lịch sử tìm kiếm bằng cách vuốt từ trái sang phải",
+                            ? "💡 Tips: Xóa lịch sử tìm kiếm\nbằng cách vuốt từ trái sang phải"
+                            : "💡 Tips: Xóa lịch sử tìm kiếm bằng cách vuốt từ trái sang phải",
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                     ],
