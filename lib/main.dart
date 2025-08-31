@@ -1,13 +1,14 @@
 import 'dart:io';
 import 'package:drug_app/manager/drug_favorite_manager.dart';
 import 'package:drug_app/manager/search_history_manager.dart';
-import 'package:drug_app/manager/theme_manager.dart';
+import 'package:drug_app/manager/settings_manager.dart';
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/shared/app_theme.dart';
 import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:drug_app/ui/drug/drug_favorite_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
+import 'package:drug_app/ui/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -18,8 +19,8 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => SettingsManager()),
         ChangeNotifierProvider(create: (_) => DrugManager()),
-        ChangeNotifierProvider(create: (_) => ThemeManager()),
         ChangeNotifierProvider(create: (_) => SearchHistoryManager()),
         ChangeNotifierProvider(create: (_) => DrugFavoriteManager()),
       ],
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ThemeMode themeMode = context.watch<ThemeManager>().themeMode;
+    ThemeMode themeMode = context.watch<SettingsManager>().themeMode;
     return MaterialApp(
       title: 'Flutter Demo',
       theme: AppTheme.light,
@@ -74,6 +75,13 @@ class MyApp extends StatelessWidget {
             builder: (_) => SafeArea(child: DrugFavoriteScreen()),
           );
         }
+
+        if (settings.name == SettingsScreen.routeName) {
+          return MaterialPageRoute(
+            builder: (_) => SafeArea(child: SettingsScreen()),
+          );
+        }
+
         return null;
       },
     );

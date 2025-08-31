@@ -6,24 +6,24 @@ import 'package:image_picker/image_picker.dart';
 class ImageSourceDialog extends StatefulWidget {
   const ImageSourceDialog({super.key});
 
+  static Future<File?> pickImage(ImageSource source) async {
+    File? imageFile;
+    final imagePicker = ImagePicker();
+    final pickedFile = await imagePicker.pickImage(source: source);
+
+    if (pickedFile != null) {
+      imageFile = File(pickedFile.path);
+      return imageFile;
+    }
+    return null;
+  }
+
   @override
   State<ImageSourceDialog> createState() => _ImageSourceDialogState();
 }
 
 class _ImageSourceDialogState extends State<ImageSourceDialog> {
   File? file;
-
-  final imagePicker = ImagePicker();
-
-  Future<File?> pickImage(ImageSource source) async {
-    final pickedFile = await imagePicker.pickImage(source: source);
-
-    if (pickedFile != null) {
-      file = File(pickedFile.path);
-      return file;
-    }
-    return null;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,9 +45,11 @@ class _ImageSourceDialogState extends State<ImageSourceDialog> {
             const Divider(),
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text('Chụp ảnh'),
+              title: const Text('Camera'),
               onTap: () async {
-                final pickedFile = await pickImage(ImageSource.camera);
+                final pickedFile = await ImageSourceDialog.pickImage(
+                  ImageSource.camera,
+                );
                 if (pickedFile != null && context.mounted) {
                   Navigator.of(context).pop(pickedFile);
                 } else if (context.mounted) {
@@ -57,9 +59,11 @@ class _ImageSourceDialogState extends State<ImageSourceDialog> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Chọn từ Thư viện'),
+              title: const Text('Thư viện ảnh'),
               onTap: () async {
-                final pickedFile = await pickImage(ImageSource.gallery);
+                final pickedFile = await ImageSourceDialog.pickImage(
+                  ImageSource.gallery,
+                );
                 if (pickedFile != null && context.mounted) {
                   Navigator.of(context).pop(pickedFile);
                 }

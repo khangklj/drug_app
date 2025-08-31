@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:drug_app/manager/drug_favorite_manager.dart';
 import 'package:drug_app/manager/drug_manager.dart';
-import 'package:drug_app/manager/theme_manager.dart';
+import 'package:drug_app/manager/settings_manager.dart';
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/models/ocr_result.dart';
 import 'package:drug_app/services/ocr_service.dart';
@@ -12,6 +12,7 @@ import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_delegate.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class HomePageScreen extends StatefulWidget {
@@ -23,12 +24,14 @@ class HomePageScreen extends StatefulWidget {
 }
 
 class _HomePageScreenState extends State<HomePageScreen> {
+  late Future<void> _initSettings;
   late Future<void> _fetchDrugsMetadata;
   late Future<void> _fetchFavoriteDrugs;
 
   @override
   void initState() {
     super.initState();
+    _initSettings = context.read<SettingsManager>().initSettings();
     _fetchDrugsMetadata = context.read<DrugManager>().fetchDrugsMetadata();
     _fetchFavoriteDrugs = context
         .read<DrugFavoriteManager>()
@@ -38,9 +41,12 @@ class _HomePageScreenState extends State<HomePageScreen> {
   @override
   Widget build(BuildContext context) {
     int textBreakPoints = 600;
-    final currentThemeMode = context.watch<ThemeManager>().themeMode;
     return FutureBuilder(
-      future: Future.wait([_fetchDrugsMetadata, _fetchFavoriteDrugs]),
+      future: Future.wait([
+        _initSettings,
+        _fetchDrugsMetadata,
+        _fetchFavoriteDrugs,
+      ]),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
@@ -66,16 +72,6 @@ class _HomePageScreenState extends State<HomePageScreen> {
               "MediApp",
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            actions: [
-              IconButton(
-                icon: currentThemeMode == ThemeMode.light
-                    ? const Icon(Icons.light_mode_outlined)
-                    : const Icon(Icons.dark_mode_outlined),
-                onPressed: () {
-                  context.read<ThemeManager>().toggleTheme();
-                },
-              ),
-            ],
           ),
           drawer: MediAppDrawer(),
           body: MainWidget(textBreakPoints: textBreakPoints),
@@ -210,13 +206,13 @@ class OCRSearchEntry extends StatelessWidget {
               ),
               if (MediaQuery.of(context).size.width < textBreakPoints)
                 Text(
-                  "Sử dụng camera để nhanh chóng\nquét tên thuốc",
+                  "Sử dụng hỉnh ảnh để nhanh chóng\ntìm kiếm tên thuốc",
                   style: Theme.of(context).textTheme.bodyLarge,
                   textAlign: TextAlign.center,
                 )
               else
                 Text(
-                  "Sử dụng camera để nhanh chóng quét tên thuốc",
+                  "Sử dụng hình ảnh để nhanh chóng tìm kiếm tên thuốc",
                   style: Theme.of(context).textTheme.bodyLarge,
                   textAlign: TextAlign.center,
                 ),
@@ -264,19 +260,27 @@ class _ScanningButtonState extends State<ScanningButton> {
 
   @override
   Widget build(BuildContext context) {
+    final scanningModes = context.watch<SettingsManager>().scanningMode;
     return FilledButton.icon(
       onPressed: _isLoading
           ? null
           : () async {
+              late final File? file;
               setState(() {
                 _isLoading = true;
               });
-              final File? file = await showDialog<File?>(
-                context: context,
-                builder: (BuildContext context) {
-                  return const ImageSourceDialog();
-                },
-              );
+              if (scanningModes == ScanningModes.camera) {
+                file = await ImageSourceDialog.pickImage(ImageSource.camera);
+              } else if (scanningModes == ScanningModes.gallery) {
+                file = await ImageSourceDialog.pickImage(ImageSource.gallery);
+              } else if (context.mounted) {
+                file = await showDialog<File?>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return const ImageSourceDialog();
+                  },
+                );
+              }
 
               if (file == null) {
                 setState(() {
@@ -322,7 +326,7 @@ class _ScanningButtonState extends State<ScanningButton> {
             },
       icon: const Icon(Icons.camera_alt),
       label: Text(
-        'Bắt đầu quét',
+        'Quét nhanh',
         style: Theme.of(context).textTheme.bodyLarge!.copyWith(
           color: Theme.of(context).colorScheme.onPrimary,
           fontWeight: FontWeight.bold,

@@ -1,5 +1,6 @@
 import 'package:drug_app/screen_routing.dart';
 import 'package:drug_app/ui/drug/drug_favorite_screen.dart';
+import 'package:drug_app/ui/settings_screen.dart';
 import 'package:flutter/material.dart';
 
 class MediAppDrawer extends StatelessWidget {
@@ -24,7 +25,7 @@ class MediAppDrawer extends StatelessWidget {
                   ),
                   Text(
                     'MediApp',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ],
               ),
@@ -32,7 +33,10 @@ class MediAppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.home),
-            title: const Text('Trang chủ'),
+            title: Text(
+              'Trang chủ',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
 
             onTap: () {
               Navigator.of(context).popAndPushNamed(HomePageScreen.routeName);
@@ -40,7 +44,10 @@ class MediAppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.star),
-            title: const Text('Danh sách yêu thích'),
+            title: Text(
+              'Danh sách yêu thích',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             onTap: () {
               Navigator.of(
                 context,
@@ -49,9 +56,12 @@ class MediAppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.settings),
-            title: const Text('Cài đặt'),
+            title: Text(
+              'Cài đặt',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             onTap: () {
-              //TODO: Navigate to settings screen
+              Navigator.of(context).popAndPushNamed(SettingsScreen.routeName);
             },
           ),
         ],
