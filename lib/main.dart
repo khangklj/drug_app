@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:drug_app/manager/drug_favorite_manager.dart';
 import 'package:drug_app/manager/search_history_manager.dart';
 import 'package:drug_app/manager/settings_manager.dart';
@@ -8,6 +9,7 @@ import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:drug_app/ui/drug/drug_favorite_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
+import 'package:drug_app/ui/drug_prescription/drug_prescription_screen.dart';
 import 'package:drug_app/ui/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -16,6 +18,8 @@ import 'screen_routing.dart';
 
 Future<void> main() async {
   await dotenv.load();
+  WidgetsFlutterBinding.ensureInitialized();
+  await AndroidAlarmManager.initialize();
   runApp(
     MultiProvider(
       providers: [
@@ -67,6 +71,12 @@ class MyApp extends StatelessWidget {
           final drugId = settings.arguments as String;
           return MaterialPageRoute(
             builder: (_) => SafeArea(child: DrugDetailsScreen(drugId: drugId)),
+          );
+        }
+
+        if (settings.name == DrugPrescriptionScreen.routeName) {
+          return MaterialPageRoute(
+            builder: (_) => SafeArea(child: const DrugPrescriptionScreen()),
           );
         }
 
