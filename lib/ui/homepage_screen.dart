@@ -4,7 +4,7 @@ import 'package:drug_app/manager/drug_favorite_manager.dart';
 import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/manager/settings_manager.dart';
 import 'package:drug_app/models/drug.dart';
-import 'package:drug_app/models/ocr_result.dart';
+import 'package:drug_app/models/ocr_drug_label_model.dart';
 import 'package:drug_app/services/ocr_service.dart';
 import 'package:drug_app/ui/components/image_source_dialog.dart';
 import 'package:drug_app/ui/components/medi_app_drawer.dart';
@@ -289,7 +289,9 @@ class _ScanningButtonState extends State<ScanningButton> {
                 return;
               }
               _showLoadingDialog();
-              final OcrResult? ocrResult = await OcrService().postImage(file);
+              final OCRDrugLabelModel? ocrResult = await OcrService().postImage(
+                file,
+              );
               // Hide loading dialog
               if (context.mounted) {
                 Navigator.of(context).pop();

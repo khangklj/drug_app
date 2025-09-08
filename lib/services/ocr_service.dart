@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:drug_app/models/ocr_result.dart';
+import 'package:drug_app/models/ocr_drug_label_model.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -11,9 +11,10 @@ class OcrService {
   final _logger = Logger();
   final String _apiUrl = dotenv.env['API_URL'] ?? '';
 
-  Future<OcrResult?> postImage(File file) async {
+  Future<OCRDrugLabelModel?> postImage(File file) async {
+    final endpoint = '$_apiUrl/drug_label';
     try {
-      final request = http.MultipartRequest('POST', Uri.parse('$_apiUrl/ocr'));
+      final request = http.MultipartRequest('POST', Uri.parse(endpoint));
       request.files.add(
         await http.MultipartFile.fromPath(
           'file',
@@ -26,9 +27,11 @@ class OcrService {
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
         final jsonResponse = jsonDecode(responseBody);
-        final OcrResult ocrResult = OcrResult.fromJson(jsonResponse);
-        _logger.i(ocrResult.ids);
-        return ocrResult;
+        final OCRDrugLabelModel result = OCRDrugLabelModel.fromJson(
+          jsonResponse,
+        );
+        _logger.i(result.ids);
+        return result;
       } else if (response.statusCode == 400) {
         throw Exception("Invalid file type");
       } else {
