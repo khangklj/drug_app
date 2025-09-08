@@ -4,11 +4,13 @@ import 'package:drug_app/manager/drug_favorite_manager.dart';
 import 'package:drug_app/manager/search_history_manager.dart';
 import 'package:drug_app/manager/settings_manager.dart';
 import 'package:drug_app/models/drug.dart';
+import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/shared/app_theme.dart';
 import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:drug_app/ui/drug/drug_favorite_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
+import 'package:drug_app/ui/drug_prescription/drug_prescription_edit_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_screen.dart';
 import 'package:drug_app/ui/settings_screen.dart';
 import 'package:flutter/material.dart';
@@ -77,6 +79,14 @@ class MyApp extends StatelessWidget {
         if (settings.name == DrugPrescriptionScreen.routeName) {
           return MaterialPageRoute(
             builder: (_) => SafeArea(child: const DrugPrescriptionScreen()),
+          );
+        }
+
+        if (settings.name == DrugPrescriptionEditScreen.routeName) {
+          final drugPrescription = settings.arguments as DrugPrescription?;
+          return MaterialPageRoute(
+            builder: (_) =>
+                SafeArea(child: DrugPrescriptionEditScreen(drugPrescription)),
           );
         }
 

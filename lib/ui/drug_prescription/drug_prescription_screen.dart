@@ -1,3 +1,4 @@
+import 'package:drug_app/ui/drug_prescription/drug_prescription_edit_screen.dart';
 import 'package:flutter/material.dart';
 
 // child: TextButton(
@@ -44,7 +45,16 @@ class DrugPrescriptionScreen extends StatelessWidget {
         elevation: 4.0,
         title: const Text("Quản lý toa thuốc"),
       ),
-      body: Center(),
+      body: Center(
+        child: TextButton(
+          onPressed: () {
+            Navigator.of(
+              context,
+            ).pushNamed(DrugPrescriptionEditScreen.routeName);
+          },
+          child: const Text("DEMO: chuyển hướng tới màn hình thêm"),
+        ),
+      ),
     );
   }
 }
