@@ -1,10 +1,25 @@
 enum TimeOfDayValues { morning, noon, afternoon, evening }
 
+extension TimeOfDayValuesExtension on TimeOfDayValues {
+  String toDisplayString() {
+    switch (this) {
+      case TimeOfDayValues.morning:
+        return 'Sáng';
+      case TimeOfDayValues.noon:
+        return 'Trưa';
+      case TimeOfDayValues.afternoon:
+        return 'Chiều';
+      case TimeOfDayValues.evening:
+        return 'Tối';
+    }
+  }
+}
+
 class DrugPrescriptionItem {
-  final String id;
+  final String? id;
   final String drugName;
   final TimeOfDayValues timeOfDay;
-  final int? quantity;
+  final double? quantity;
   final String? measurement;
 
   DrugPrescriptionItem({
@@ -19,7 +34,7 @@ class DrugPrescriptionItem {
     String? id,
     String? drugName,
     TimeOfDayValues? timeOfDay,
-    int? quantity,
+    double? quantity,
     String? measurement,
   }) {
     return DrugPrescriptionItem(
@@ -36,13 +51,14 @@ class DrugPrescriptionItem {
       id: json['id'],
       drugName: json['drug_name'],
       timeOfDay: TimeOfDayValues.values.byName(json['time_of_day']),
-      quantity: int.parse(json['quantity'].toString()),
+      quantity: double.parse(json['quantity'].toString()),
       measurement: json['measurement'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'drug_name': drugName,
       'time_of_day': timeOfDay.name,
       'quantity': quantity,

@@ -1,5 +1,9 @@
+import 'package:drug_app/manager/drug_prescription_manager.dart';
+import 'package:drug_app/models/drug_prescription.dart';
+import 'package:drug_app/ui/components/medi_app_drawer.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_edit_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 // child: TextButton(
 //   onPressed: () async {
@@ -33,27 +37,80 @@ import 'package:flutter/material.dart';
 //     return true;
 //   }
 
-class DrugPrescriptionScreen extends StatelessWidget {
+class DrugPrescriptionScreen extends StatefulWidget {
   const DrugPrescriptionScreen({super.key});
   static const routeName = '/drug_prescription';
 
   @override
+  State<DrugPrescriptionScreen> createState() => _DrugPrescriptionScreenState();
+}
+
+class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
+  late Future<void> _fetchDrugPrescriptions;
+  @override
+  void initState() {
+    super.initState();
+    _fetchDrugPrescriptions = context
+        .read<DrugPrescriptionManager>()
+        .fetchDrugPrescriptions();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: true,
-        elevation: 4.0,
-        title: const Text("Quản lý toa thuốc"),
-      ),
-      body: Center(
-        child: TextButton(
-          onPressed: () {
-            Navigator.of(
-              context,
-            ).pushNamed(DrugPrescriptionEditScreen.routeName);
-          },
-          child: const Text("DEMO: chuyển hướng tới màn hình thêm"),
-        ),
+      appBar: AppBar(elevation: 4.0, title: const Text("Quản lý toa thuốc")),
+      drawer: MediAppDrawer(),
+      body: FutureBuilder(
+        future: _fetchDrugPrescriptions,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text("Có lỗi đã xảy ra. Vui lòng thử lại!"),
+            );
+          }
+          final List<DrugPrescription> drugPrescriptions = context
+              .watch<DrugPrescriptionManager>()
+              .drugPrescriptions;
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: drugPrescriptions.length,
+                  separatorBuilder: (context, index) => const Divider(),
+                  itemBuilder: (context, index) {
+                    return ExpansionTile(
+                      title: Text(drugPrescriptions[index].customName!),
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pushNamed(
+                              DrugPrescriptionEditScreen.routeName,
+                              arguments: drugPrescriptions[index],
+                            );
+                          },
+                          child: Text("Xem chi tiết..."),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(
+                      context,
+                    ).pushNamed(DrugPrescriptionEditScreen.routeName);
+                  },
+                  child: const Text("DEMO: chuyển hướng tới màn hình thêm"),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

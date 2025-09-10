@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:drug_app/manager/drug_favorite_manager.dart';
+import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/manager/search_history_manager.dart';
 import 'package:drug_app/manager/settings_manager.dart';
 import 'package:drug_app/models/drug.dart';
@@ -27,6 +28,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsManager()),
         ChangeNotifierProvider(create: (_) => DrugManager()),
+        ChangeNotifierProvider(create: (_) => DrugPrescriptionManager()),
         ChangeNotifierProvider(create: (_) => SearchHistoryManager()),
         ChangeNotifierProvider(create: (_) => DrugFavoriteManager()),
       ],

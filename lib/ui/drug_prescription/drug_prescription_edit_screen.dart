@@ -1,17 +1,73 @@
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:collection/collection.dart';
+import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
+import 'package:drug_app/ui/components/loading_dialog.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/web.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+
+class DrugPrescriptionCardModel {
+  final String id;
+  final String drugName;
+  final List<DrugPrescriptionItem> items;
+  late final String? measurement;
+  late final Map<TimeOfDayValues, double> dailyDosages;
+
+  DrugPrescriptionCardModel(
+    this.id,
+    this.drugName,
+    this.items, {
+    String? measurement,
+    Map<TimeOfDayValues, double>? dailyDosages,
+  }) : measurement =
+           measurement ?? (items.isNotEmpty ? items.first.measurement : null),
+       dailyDosages =
+           dailyDosages ??
+           {
+             for (var time in TimeOfDayValues.values)
+               time:
+                   items
+                       .firstWhereOrNull((item) => item.timeOfDay == time)
+                       ?.quantity ??
+                   0,
+           };
+
+  DrugPrescriptionCardModel copyWith({
+    String? id,
+    String? drugName,
+    List<DrugPrescriptionItem>? items,
+    String? measurement,
+    Map<TimeOfDayValues, double>? dailyDosages,
+  }) {
+    return DrugPrescriptionCardModel(
+      id ?? this.id,
+      drugName ?? this.drugName,
+      items ?? this.items,
+      measurement: measurement ?? this.measurement,
+      dailyDosages: dailyDosages ?? this.dailyDosages,
+    );
+  }
+}
 
 class DrugPrescriptionEditScreen extends StatefulWidget {
   static const routeName = '/drug_prescription_edit_screen';
   DrugPrescriptionEditScreen(DrugPrescription? drugPrescription, {super.key})
     : drugPrescription =
-          drugPrescription ?? DrugPrescription(id: '', deviceId: '', items: []);
+          drugPrescription ??
+          DrugPrescription(
+            id: null,
+            customName: null,
+            deviceId: null,
+            items: [],
+            isActive: false,
+          );
 
   late final DrugPrescription drugPrescription;
+  late final bool isEditState = drugPrescription.id != null;
 
   @override
   State<DrugPrescriptionEditScreen> createState() =>
@@ -21,86 +77,152 @@ class DrugPrescriptionEditScreen extends StatefulWidget {
 class _DrugPrescriptionEditScreenState
     extends State<DrugPrescriptionEditScreen> {
   late DrugPrescription drugPrescription;
+  late List<DrugPrescriptionCardModel> cards = [];
   final _formKey = GlobalKey<FormState>();
+  final Map<String, Map<TimeOfDayValues, TextEditingController>> _controllers =
+      {};
+
   var uuid = Uuid();
-  Map<String, List<DrugPrescriptionItem>> _groupedItemsByDrugName = {};
 
   @override
   void initState() {
     super.initState();
-    drugPrescription = widget.drugPrescription.copyWith();
-    if (drugPrescription.items.isEmpty) {
-      drugPrescription.items.add(
-        DrugPrescriptionItem(
-          id: uuid.v4(),
-          drugName: 'efd',
-          timeOfDay: TimeOfDayValues.morning,
-        ),
-      );
-      drugPrescription.items.add(
-        DrugPrescriptionItem(
-          id: uuid.v4(),
-          drugName: 'abc',
-          timeOfDay: TimeOfDayValues.noon,
-        ),
-      );
-    }
-    _groupItems();
+    drugPrescription = widget.drugPrescription;
+    _initCards();
+    _initControllers();
   }
 
-  void _groupItems() {
-    _groupedItemsByDrugName = groupBy(
+  @override
+  void dispose() {
+    for (final controller in _controllers.values) {
+      for (final value in controller.values) {
+        value.dispose();
+      }
+    }
+    super.dispose();
+  }
+
+  Map<String, List<DrugPrescriptionItem>> groupDPByName() {
+    Map<String, List<DrugPrescriptionItem>> groupItems = groupBy(
       drugPrescription.items,
       (item) => item.drugName,
     );
+    return groupItems;
   }
 
-  void _addDPItem(String drugName, TimeOfDayValues timeOfDay) {
-    setState(() {
-      drugPrescription = drugPrescription.copyWith(
-        items: [
-          ...drugPrescription.items,
-          DrugPrescriptionItem(
-            id: uuid.v4(),
-            drugName: drugName,
-            timeOfDay: timeOfDay,
-          ),
-        ],
+  void _initCards() {
+    final groupItems = groupDPByName();
+    groupItems.forEach((drugName, dpItems) {
+      String id = uuid.v4();
+      DrugPrescriptionCardModel cardModel = DrugPrescriptionCardModel(
+        id,
+        drugName,
+        dpItems,
       );
-      _groupItems();
+      cards.add(cardModel);
     });
   }
 
-  void _removeDPItem(DrugPrescriptionItem item, {bool isRemoveAll = false}) {
-    setState(() {
-      final itemCount = _groupedItemsByDrugName[item.drugName]!.length;
-      if (itemCount == 1 && !isRemoveAll) {
-        return;
-      }
-      drugPrescription.items.remove(item);
-      _groupItems();
-    });
-  }
-
-  void _renameDPItem(String value, List<DrugPrescriptionItem> changedItems) {
-    setState(() {
-      for (var changedItem in changedItems) {
-        final itemId = changedItem.id;
-        final itemIndex = drugPrescription.items.indexWhere(
-          (item) => item.id == itemId,
+  void _initControllers() {
+    for (final card in cards) {
+      _controllers[card.id] = {};
+      for (var time in TimeOfDayValues.values) {
+        _controllers[card.id]![time] = TextEditingController(
+          text: card.dailyDosages[time]?.toString() ?? '0.0',
         );
-        if (itemIndex != -1) {
-          drugPrescription = drugPrescription.copyWith(
-            items: [
-              ...drugPrescription.items.sublist(0, itemIndex),
-              drugPrescription.items[itemIndex].copyWith(drugName: value),
-              ...drugPrescription.items.sublist(itemIndex + 1),
-            ],
-          );
-        }
       }
-      _groupItems();
+    }
+  }
+
+  void _addNewCard() {
+    setState(() {
+      String id = uuid.v4();
+      DrugPrescriptionCardModel cardModel = DrugPrescriptionCardModel(
+        id,
+        '',
+        [],
+        measurement: 'viên',
+      );
+      cards.add(cardModel);
+      _controllers[id] = {};
+      for (var time in TimeOfDayValues.values) {
+        _controllers[id]![time] = TextEditingController(text: '0.0');
+      }
     });
+  }
+
+  void _removeCard(String id) {
+    if (cards.length == 1) {
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.error,
+        animType: AnimType.scale,
+        title: 'Xóa thuốc thất bại',
+        desc: 'Toa thuốc phải có ít nhất 1 thuốc',
+        btnOkOnPress: () {},
+        btnOkIcon: Icons.check_circle,
+        btnCancel: null,
+        btnOkText: 'OK',
+      ).show();
+      return;
+    }
+    setState(() {
+      cards.removeWhere((card) => card.id == id);
+      _controllers.remove(id);
+    });
+  }
+
+  DrugPrescription? _onSaveForm() {
+    // Convert to drug prescription item from card model
+    List<DrugPrescriptionItem> dpItems = [];
+    for (final card in cards) {
+      // If all quanity of time is 0.0, return null
+      if (card.dailyDosages.values.every((quantity) => quantity == 0.0)) {
+        return null;
+      }
+
+      for (var time in TimeOfDayValues.values) {
+        final quantity = double.tryParse(_controllers[card.id]![time]!.text);
+        if (quantity == 0.0) continue;
+        dpItems.add(
+          DrugPrescriptionItem(
+            id: card.items
+                .firstWhereOrNull((item) => item.timeOfDay == time)
+                ?.id,
+            drugName: card.drugName,
+            timeOfDay: time,
+            quantity: quantity,
+            measurement: card.measurement,
+          ),
+        );
+      }
+    }
+
+    if (dpItems.isEmpty) {
+      return null;
+    }
+
+    final formatter = DateFormat('ssmmHHddMMyyyy');
+    final generatedCustomName =
+        'Toa thuốc ${formatter.format(DateTime.now().toLocal())}';
+
+    late final String? customName;
+    if (drugPrescription.customName == null ||
+        drugPrescription.customName!.isEmpty) {
+      customName = generatedCustomName;
+    } else {
+      customName = drugPrescription.customName;
+    }
+
+    final DrugPrescription dp = DrugPrescription(
+      id: drugPrescription.id,
+      customName: customName,
+      deviceId: drugPrescription.deviceId,
+      items: dpItems,
+      isActive: drugPrescription.isActive,
+    );
+
+    return dp;
   }
 
   @override
@@ -109,150 +231,319 @@ class _DrugPrescriptionEditScreenState
       appBar: AppBar(
         automaticallyImplyLeading: true,
         elevation: 4.0,
-        title: const Text("Quản lý toa thuốc - Chỉnh sửa"),
+        title: widget.isEditState
+            ? Text("Chỉnh sửa toa thuốc")
+            : Text("Thêm toa thuốc"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.save_outlined),
+            onPressed: () async {
+              if (_formKey.currentState!.validate()) {
+                final dp = _onSaveForm();
+
+                if (dp == null) {
+                  AwesomeDialog(
+                    context: context,
+                    dialogType: DialogType.error,
+                    animType: AnimType.scale,
+                    title: 'Lỗi khi lưu toa thuốc',
+                    desc: 'Vui lòng nhập thông tin toa thuốc.',
+                    btnOkOnPress: () {},
+                    btnOkIcon: Icons.check_circle,
+                    btnCancel: null,
+                    btnOkText: 'OK',
+                  ).show();
+                  return;
+                }
+
+                showDialog(
+                  barrierDismissible: false,
+                  context: context,
+                  builder: (context) {
+                    return const LoadingDialog();
+                  },
+                );
+
+                if (widget.isEditState) {
+                  await context
+                      .read<DrugPrescriptionManager>()
+                      .updateDrugPrescription(dp);
+                } else {
+                  await context
+                      .read<DrugPrescriptionManager>()
+                      .addDrugPrescription(dp);
+                }
+
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  AwesomeDialog(
+                    context: context,
+                    dialogType: DialogType.info,
+                    animType: AnimType.scale,
+                    title: 'Lưu toa thuốc thành công',
+                    btnOkOnPress: () {
+                      Navigator.of(context).pop();
+                    },
+                    onDismissCallback: (type) {
+                      if (type != DismissType.btnOk) {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    btnOkIcon: Icons.check_circle,
+                    btnCancel: null,
+                    btnOkText: 'OK',
+                  ).show();
+                }
+              } else {
+                AwesomeDialog(
+                  context: context,
+                  dialogType: DialogType.error,
+                  animType: AnimType.scale,
+                  title: 'Lỗi khi lưu toa thuốc',
+                  desc: 'Vui lòng nhập thông tin toa thuốc.',
+                  btnOkOnPress: () {},
+                  btnOkIcon: Icons.check_circle,
+                  btnCancel: null,
+                  btnOkText: 'OK',
+                ).show();
+              }
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                "Thông tin toa thuốc",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              TextButton(
-                onPressed: () {
-                  var logger = Logger();
-                  for (var item in drugPrescription.items) {
-                    logger.i(item.toJson());
-                  }
-                },
-                child: const Text("DEMO"),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Tên ghi nhớ (có thể bỏ trống)',
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 20),
+                Text(
+                  "Thông tin toa thuốc",
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    drugPrescription = drugPrescription.copyWith(
-                      customName: value,
-                    );
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
+                TextButton(onPressed: () {}, child: const Text("DEMO")),
+                const SizedBox(height: 20),
+                SwitchListTile(
+                  secondary: const Icon(Icons.watch_later_outlined),
+                  title: Text(
+                    "Bật chế độ theo dõi",
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  value: drugPrescription.isActive,
+                  onChanged: (value) {
+                    setState(() {
+                      drugPrescription = drugPrescription.copyWith(
+                        isActive: value,
+                      );
+                    });
+                  },
+                ),
 
-              const SizedBox(height: 20),
-              ListView.separated(
-                separatorBuilder: (context, index) {
-                  return const Divider();
-                },
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _groupedItemsByDrugName.length,
-                itemBuilder: (context, index) {
-                  final groupItems = _groupedItemsByDrugName.values
-                      .toList()[index];
-                  return DrugPrescriptionItemWidget(
-                    items: groupItems,
-                    onDrugNameChange: (value, changedItems) {
-                      _renameDPItem(value, changedItems);
-                    },
-                    onTimeCheckedChange: (value, item, drugName, time) {
-                      if (item == null) {
-                        _addDPItem(drugName, time);
-                      } else {
-                        _removeDPItem(item);
-                      }
-                    },
-                  );
-                },
-              ),
-            ],
+                const SizedBox(height: 20),
+                TextFormField(
+                  initialValue: drugPrescription.customName,
+                  decoration: const InputDecoration(
+                    labelText: 'Tên ghi nhớ (có thể bỏ trống)',
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      drugPrescription = drugPrescription.copyWith(
+                        customName: value,
+                      );
+                    });
+                  },
+                ),
+                const SizedBox(height: 20),
+                ListView.separated(
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 20),
+                  itemCount: cards.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return _buildCardWidget(index);
+                  },
+                ),
+                const SizedBox(height: 20),
+                TextButton.icon(
+                  label: Text("Thêm thuốc mới"),
+                  icon: Icon(Icons.add_box_outlined),
+                  onPressed: () {
+                    _addNewCard();
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
 
-class DrugPrescriptionItemWidget extends StatefulWidget {
-  const DrugPrescriptionItemWidget({
-    super.key,
-    required this.items,
-    required this.onDrugNameChange,
-    // required this.onRemove,
-    required this.onTimeCheckedChange,
-  });
-
-  final List<DrugPrescriptionItem> items;
-  final void Function(String value, List<DrugPrescriptionItem> items)
-  onDrugNameChange;
-  // final void Function(String drugName, TimeOfDayValues timeOfDay) onRemove;
-
-  final void Function(
-    bool? value,
-    DrugPrescriptionItem? item,
-    String drugName,
-    TimeOfDayValues time,
-  )
-  onTimeCheckedChange;
-
-  @override
-  State<DrugPrescriptionItemWidget> createState() =>
-      _DrugPrescriptionItemWidgetState();
-}
-
-class _DrugPrescriptionItemWidgetState
-    extends State<DrugPrescriptionItemWidget> {
-  @override
-  Widget build(BuildContext context) {
-    final drugName = widget.items[0].drugName;
+  Card _buildCardWidget(int index) {
+    final card = cards[index];
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              initialValue: drugName,
-              decoration: InputDecoration(
-                labelText: 'Tên thuốc',
-                hintText: 'Nhập tên thuốc',
-                border: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                errorBorder: InputBorder.none,
-                disabledBorder: InputBorder.none,
-                fillColor: Colors.transparent,
+      key: ValueKey(card.id),
+      child: Stack(
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                initialValue: card.drugName,
+                decoration: InputDecoration(
+                  labelText: 'Tên thuốc (*)',
+                  hintText: 'Nhập tên thuốc',
+                  border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  fillColor: Colors.transparent,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(
+                    RegExp(r'^[\p{L}\p{N}\p{P}\p{Zs}]+$', unicode: true),
+                  ),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập tên thuốc';
+                  }
+                  final duplicateCount = cards
+                      .where((card) => card.drugName == value)
+                      .length;
+
+                  if (duplicateCount > 1) {
+                    return 'Tên thuốc bị trùng lặp';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  setState(() {
+                    cards[index] = card.copyWith(drugName: value);
+                  });
+                },
               ),
-              onChanged: (value) {
-                widget.onDrugNameChange(value, widget.items);
+              Column(
+                children: [
+                  TextFormField(
+                    initialValue: card.measurement,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    decoration: InputDecoration(
+                      alignLabelWithHint: true,
+                      labelText: 'Đơn vị tính (*)',
+                      hintText: 'viên, mg, gói, ...',
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      fillColor: Colors.transparent,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^[\p{L}\p{N}\p{P}\p{Zs}]+$', unicode: true),
+                      ),
+                    ],
+                    keyboardType: TextInputType.text,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Vui lòng nhập đơn vị tính';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      setState(() {
+                        cards[index] = card.copyWith(measurement: value);
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10.0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text("Số lượng uống (nhập ít nhất 1 buổi):"),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    spacing: 5.0,
+                    children: [
+                      ...TimeOfDayValues.values.map((time) {
+                        return Expanded(
+                          child: TextFormField(
+                            controller: _controllers[cards[index].id]?[time],
+                            decoration: InputDecoration(
+                              alignLabelWithHint: true,
+                              labelText: time.toDisplayString(),
+                              focusedBorder: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              fillColor: Colors.transparent,
+                            ),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'^\d+(\.\d*)?'),
+                              ),
+                            ],
+                            keyboardType: TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            onChanged: (value) {
+                              // Get the current controller for the text field.
+                              final controller = _controllers[card.id]![time]!;
+
+                              setState(() {
+                                cards[index] = cards[index].copyWith(
+                                  dailyDosages: {
+                                    ...card.dailyDosages,
+                                    time: double.tryParse(value) ?? 0.0,
+                                  },
+                                );
+                                if (value.isEmpty ||
+                                    double.tryParse(value) == null ||
+                                    double.tryParse(value) == 0.0) {
+                                  controller.text = '0.0';
+                                }
+                              });
+                            },
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Positioned(
+            top: 1.0,
+            right: 1.0,
+            child: IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () {
+                AwesomeDialog(
+                  context: context,
+                  dialogType: DialogType.warning,
+                  animType: AnimType.scale,
+                  title: 'Xóa thuốc',
+                  desc: 'Bạn có muốn xóa thuốc này?',
+                  btnOkText: 'Đồng ý',
+                  btnCancelText: 'Hủy',
+                  btnOkOnPress: () => _removeCard(card.id),
+                  btnCancelOnPress: () {},
+                ).show();
               },
             ),
-            const SizedBox(height: 16.0),
-            Column(
-              children: [
-                ...TimeOfDayValues.values.map((time) {
-                  final item = widget.items.firstWhereOrNull(
-                    (item) => item.timeOfDay == time,
-                  );
-                  return CheckboxListTile(
-                    title: Text(time.name),
-                    value: item != null,
-                    onChanged: (value) {
-                      widget.onTimeCheckedChange(value, item, drugName, time);
-                    },
-                  );
-                }),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
