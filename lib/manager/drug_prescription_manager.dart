@@ -1,4 +1,5 @@
 import 'package:drug_app/models/drug_prescription.dart';
+import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/services/drug_prescription_service.dart';
 import 'package:drug_app/utils.dart';
 import 'package:flutter/material.dart';
@@ -39,5 +40,20 @@ class DrugPrescriptionManager with ChangeNotifier {
     _drugPrescriptionList.removeWhere((dp) => dp.id == updatedDP.id);
     _drugPrescriptionList.add(updatedDP);
     notifyListeners();
+  }
+
+  Set<TimeOfDayValues> getActiveNotificationTimes() {
+    final timeOfDays = <TimeOfDayValues>{};
+    for (final dp in _drugPrescriptionList) {
+      if (dp.isActive == true) {
+        for (final item in dp.items) {
+          timeOfDays.add(item.timeOfDay);
+          if (timeOfDays.length == TimeOfDayValues.values.length) {
+            return timeOfDays;
+          }
+        }
+      }
+    }
+    return timeOfDays;
   }
 }

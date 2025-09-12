@@ -1,6 +1,7 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:collection/collection.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
+import 'package:drug_app/manager/notification_manager.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/ui/components/loading_dialog.dart';
@@ -272,6 +273,18 @@ class _DrugPrescriptionEditScreenState
                   await context
                       .read<DrugPrescriptionManager>()
                       .addDrugPrescription(dp);
+                }
+
+                if (context.mounted) {
+                  final activeNotificationTimes = context
+                      .read<DrugPrescriptionManager>()
+                      .getActiveNotificationTimes();
+                  for (final activeNotificationTime
+                      in activeNotificationTimes) {
+                    context
+                        .read<NotificationManager>()
+                        .scheduleDailyNotification(activeNotificationTime);
+                  }
                 }
 
                 if (context.mounted) {
