@@ -1,4 +1,5 @@
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/manager/notification_manager.dart';
 import 'package:drug_app/manager/settings_manager.dart';
@@ -280,7 +281,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 2: FlexColumnWidth(2.0), // For the TextButton
               },
               children: TimeOfDayValues.values.map((timeOfDay) {
-                final scheduledTime = manager.notificationTimes[timeOfDay];
+                final currentTime = manager.notificationTimes[timeOfDay];
                 return TableRow(
                   children: [
                     TableCell(
@@ -289,9 +290,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     TableCell(
                       verticalAlignment: TableCellVerticalAlignment.middle,
-                      child: scheduledTime == null
+                      child: currentTime == null
                           ? Text("Chưa đặt thời gian")
-                          : Text(DateFormat('HH:mm:ss').format(scheduledTime)),
+                          : Text(DateFormat('HH:mm:ss').format(currentTime)),
                     ),
                     TableCell(
                       verticalAlignment: TableCellVerticalAlignment.middle,
@@ -300,19 +301,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           DatePicker.showTimePicker(
                             context,
                             showTitleActions: true,
-                            onConfirm: (newScheduledTime) {
-                              manager.setScheduledTime(
-                                timeOfDay,
-                                newScheduledTime,
-                              );
+                            onConfirm: (newTime) {
+                              final otherTimes = manager
+                                  .notificationTimes
+                                  .entries
+                                  .where((entry) => entry.key != timeOfDay)
+                                  .map((entry) => entry.value)
+                                  .toList();
+
+                              // Compare hour, minute and second with others times
+                              if (otherTimes.any(
+                                (otherTime) =>
+                                    otherTime!.hour == newTime.hour &&
+                                    otherTime.minute == newTime.minute &&
+                                    otherTime.second == newTime.second,
+                              )) {
+                                AwesomeDialog(
+                                  context: context,
+                                  dialogType: DialogType.error,
+                                  animType: AnimType.scale,
+                                  title: 'Đặt mốc thời gian',
+                                  desc: 'Thời gian này đã được sử dụng',
+                                  btnOkOnPress: () {},
+                                  btnOkIcon: Icons.check_circle,
+                                  btnOkText: 'OK',
+                                ).show();
+                                return;
+                              }
+
+                              manager.setScheduledTime(timeOfDay, newTime);
                               final activeNotificationTimes = context
                                   .read<DrugPrescriptionManager>()
                                   .getActiveNotificationTimes();
                               if (activeNotificationTimes.contains(timeOfDay)) {
-                                manager.scheduleDailyNotification(timeOfDay);
+                                manager.scheduleDailyNotification(
+                                  timeOfDay: timeOfDay,
+                                  scheduledTime: newTime,
+                                );
                               }
                             },
-                            currentTime: scheduledTime ?? DateTime.now(),
+                            currentTime: DateTime.now(),
                             locale: LocaleType.vi,
                           );
                         },
@@ -330,7 +358,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               alignment: Alignment.center,
               child: TextButton.icon(
                 onPressed: () async {
-                  await manager.cancelAllDailyNotifications();
+                  AwesomeDialog(
+                    context: context,
+                    dialogType: DialogType.warning,
+                    animType: AnimType.scale,
+                    title: 'Đặt lại mốc thời gian',
+                    desc:
+                        'Thao tác này sẽ đặt lại tất cả các mốc thời gian. Bạn có muốn tiếp tục không?',
+                    btnOkOnPress: () async {
+                      await manager.resetAllScheduledTimes();
+                    },
+                    btnCancelOnPress: () async {},
+                    btnOkIcon: Icons.check_circle,
+                    btnOkText: 'Đồng ý',
+                    btnCancelText: 'Từ chối',
+                  ).show();
                 },
                 label: Text("Đặt lại tất cả mốc thời gian"),
               ),

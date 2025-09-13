@@ -54,6 +54,12 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
     return Scaffold(
       appBar: AppBar(elevation: 4.0, title: const Text("Quản lý toa thuốc")),
       drawer: MediAppDrawer(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.of(context).pushNamed(DrugPrescriptionEditScreen.routeName);
+        },
+        child: const Icon(Icons.add),
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -78,14 +84,6 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
                   ],
                 );
               },
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(
-                  context,
-                ).pushNamed(DrugPrescriptionEditScreen.routeName);
-              },
-              child: const Text("DEMO: chuyển hướng tới màn hình thêm"),
             ),
           ],
         ),

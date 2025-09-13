@@ -121,6 +121,11 @@ class _DrugPrescriptionEditScreenState
       );
       cards.add(cardModel);
     });
+
+    // Add a card if empty
+    if (cards.isEmpty) {
+      _addNewCard();
+    }
   }
 
   void _initControllers() {
@@ -497,9 +502,6 @@ class _DrugPrescriptionEditScreenState
                               decimal: true,
                             ),
                             onChanged: (value) {
-                              // Get the current controller for the text field.
-                              final controller = _controllers[card.id]![time]!;
-
                               setState(() {
                                 cards[index] = cards[index].copyWith(
                                   dailyDosages: {
@@ -507,22 +509,6 @@ class _DrugPrescriptionEditScreenState
                                     time: double.tryParse(value) ?? 0.0,
                                   },
                                 );
-                                if (value.isEmpty ||
-                                    double.tryParse(value) == null ||
-                                    double.tryParse(value) == 0.0) {
-                                  controller.text = '0.0';
-                                }
-
-                                //If value starts with 0 and any number, remove leading 0.
-                                if (value.startsWith('0') && value.length > 1) {
-                                  controller.text = value.substring(1);
-
-                                  //Move the cursor to the left of decimal point
-                                  controller.selection =
-                                      TextSelection.fromPosition(
-                                        TextPosition(offset: 1),
-                                      );
-                                }
                               });
                             },
                           ),

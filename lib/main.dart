@@ -6,7 +6,6 @@ import 'package:drug_app/manager/search_history_manager.dart';
 import 'package:drug_app/manager/settings_manager.dart';
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/models/drug_prescription.dart';
-import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/services/notification_service.dart';
 import 'package:drug_app/shared/app_theme.dart';
 import 'package:drug_app/manager/drug_manager.dart';
@@ -16,10 +15,8 @@ import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_edit_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_screen.dart';
 import 'package:drug_app/ui/settings_screen.dart';
-import 'package:drug_app/ui/test_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'screen_routing.dart';
 
@@ -30,20 +27,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final notificationService = NotificationService();
   // Initialize notifications
-  await notificationService.init((payload) {
+  await notificationService.initSettings((payload) {
     if (payload != null && payload.isNotEmpty) {
       // navigatorKey.currentState?.pushNamed(payload);
       print(payload);
     }
   });
-  var notificationStatus = await Permission.notification.status;
-  final Map<TimeOfDayValues, DateTime> notificationTimes = {};
-  for (final timeOfDay in TimeOfDayValues.values) {
-    final time = await notificationService.getScheduledNotifcationTime(
-      timeOfDay,
-    );
-    notificationTimes[timeOfDay] = time;
-  }
 
   runApp(
     MultiProvider(
@@ -62,12 +51,10 @@ Future<void> main() async {
           DrugPrescriptionManager,
           NotificationManager
         >(
-          create: (_) => NotificationManager(
-            notificationStatus: notificationStatus,
-            notificationTimes: notificationTimes,
-          ),
+          create: (_) => NotificationManager()..initSettings(),
           update: (_, drugPrescriptionManager, notificationManager) =>
               notificationManager!..updateNotification(drugPrescriptionManager),
+          lazy: false,
         ),
       ],
       child: const MyApp(),
@@ -88,12 +75,6 @@ class MyApp extends StatelessWidget {
       themeMode: themeMode,
       home: SafeArea(child: const HomePageScreen()),
       onGenerateRoute: (settings) {
-        if (settings.name == TestScreen.routeName) {
-          return MaterialPageRoute(
-            builder: (_) => SafeArea(child: const TestScreen()),
-          );
-        }
-
         if (settings.name == HomePageScreen.routeName) {
           return MaterialPageRoute(
             builder: (_) => SafeArea(child: const HomePageScreen()),

@@ -11,7 +11,6 @@ import 'package:drug_app/ui/components/medi_app_drawer.dart';
 import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_delegate.dart';
-import 'package:drug_app/ui/test_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -127,13 +126,6 @@ class MainWidget extends StatelessWidget {
               const SizedBox(height: 20),
 
               KeywordSearchEntry(),
-
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamed(TestScreen.routeName);
-                },
-                child: const Text("Demo"),
-              ),
             ],
           ),
         ),
