@@ -23,7 +23,7 @@ class NotificationPayload {
     );
   }
 
-  Map<String, dynamic> toJSON() {
+  Map<String, dynamic> toJson() {
     return {
       'timeOfDay': timeOfDay.name,
       'scheduledTime': scheduledTime.toIso8601String(),
@@ -49,6 +49,7 @@ class NotificationService {
     TimeOfDayValues.noon: 1414,
     TimeOfDayValues.evening: 1415,
   };
+  late final Map<TimeOfDayValues, tz.TZDateTime> defaultNotificationTimes;
   final AndroidNotificationDetails _androidNotificationDetails =
       AndroidNotificationDetails(
         'reminder_channel_id',
@@ -75,6 +76,21 @@ class NotificationService {
         onSelectNotification(response.payload);
       },
     );
+
+    defaultNotificationTimes = {
+      TimeOfDayValues.morning: _nextInstanceOfDailyReminder(
+        DateTime.now().copyWith(hour: 6, minute: 0, second: 0),
+      ),
+      TimeOfDayValues.noon: _nextInstanceOfDailyReminder(
+        DateTime.now().copyWith(hour: 11, minute: 0, second: 0),
+      ),
+      TimeOfDayValues.afternoon: _nextInstanceOfDailyReminder(
+        DateTime.now().copyWith(hour: 16, minute: 0, second: 0),
+      ),
+      TimeOfDayValues.evening: _nextInstanceOfDailyReminder(
+        DateTime.now().copyWith(hour: 21, minute: 0, second: 0),
+      ),
+    };
   }
 
   Future<bool?> requestNotificationPermission() async {
@@ -85,21 +101,22 @@ class NotificationService {
         ?.requestNotificationsPermission();
   }
 
-  Future<DateTime?> getScheduledNotifcationTime(
+  Future<tz.TZDateTime> getScheduledNotifcationTime(
     TimeOfDayValues timeOfDay,
   ) async {
     final pendingNotifications = await _flutterLocalNotificationsPlugin
         .pendingNotificationRequests();
     late final NotificationPayload payload;
-    if (pendingNotifications.isEmpty) return null;
     final targetNotification = pendingNotifications.firstWhereOrNull(
       (notification) => notification.id == _notificationMapIds[timeOfDay],
     );
-    if (targetNotification == null) return null;
+    if (targetNotification == null) {
+      return defaultNotificationTimes[timeOfDay]!;
+    }
     payload = NotificationPayload.fromJSON(
       jsonDecode(targetNotification.payload!),
     );
-    return payload.scheduledTime;
+    return tz.TZDateTime.from(payload.scheduledTime, tz.local);
   }
 
   //TODO: DELETE DEMO
@@ -154,18 +171,14 @@ class NotificationService {
     );
   }
 
-  Future<bool> scheduleDailyNotification(
+  Future<void> scheduleDailyNotification(
     TimeOfDayValues timeOfDay,
     DateTime scheduleTime,
   ) async {
     final prefs = await SharedPreferences.getInstance();
     int? id = prefs.getInt(timeOfDay.name);
     if (id == null) {
-      final isSuccess = await prefs.setInt(
-        timeOfDay.name,
-        _notificationMapIds[timeOfDay]!,
-      );
-      if (!isSuccess) return false;
+      await prefs.setInt(timeOfDay.name, _notificationMapIds[timeOfDay]!);
       id = _notificationMapIds[timeOfDay]!;
     } else {
       await _flutterLocalNotificationsPlugin.cancel(id);
@@ -179,12 +192,13 @@ class NotificationService {
       NotificationDetails(android: _androidNotificationDetails),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
-      payload: NotificationPayload(
-        timeOfDay: timeOfDay,
-        scheduledTime: scheduleTime,
-      ).toJSON().toString(),
+      payload: jsonEncode(
+        NotificationPayload(
+          timeOfDay: timeOfDay,
+          scheduledTime: scheduleTime,
+        ).toJson(),
+      ),
     );
-    return true;
   }
 
   tz.TZDateTime _nextInstanceOfDailyReminder(DateTime time) {
@@ -202,6 +216,14 @@ class NotificationService {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
     return scheduledDate;
+  }
+
+  Future<void> cancelDailyNotification(TimeOfDayValues timeOfDay) async {
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getInt(timeOfDay.name);
+    if (id == null) return;
+    await _flutterLocalNotificationsPlugin.cancel(id);
+    await prefs.remove(timeOfDay.name);
   }
 
   Future<void> cancelAllDailyNotifications() async {

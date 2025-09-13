@@ -28,18 +28,18 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<void> main() async {
   await dotenv.load();
   WidgetsFlutterBinding.ensureInitialized();
-
+  final notificationService = NotificationService();
   // Initialize notifications
-  await NotificationService().init((payload) {
+  await notificationService.init((payload) {
     if (payload != null && payload.isNotEmpty) {
       // navigatorKey.currentState?.pushNamed(payload);
       print(payload);
     }
   });
   var notificationStatus = await Permission.notification.status;
-  final Map<TimeOfDayValues, DateTime?> notificationTimes = {};
+  final Map<TimeOfDayValues, DateTime> notificationTimes = {};
   for (final timeOfDay in TimeOfDayValues.values) {
-    final time = await NotificationService().getScheduledNotifcationTime(
+    final time = await notificationService.getScheduledNotifcationTime(
       timeOfDay,
     );
     notificationTimes[timeOfDay] = time;
@@ -48,17 +48,27 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SettingsManager()),
         ChangeNotifierProvider(
+          create: (_) => SettingsManager()..initSettings(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => DrugPrescriptionManager()..fetchDrugPrescriptions(),
+          lazy: false,
+        ),
+        ChangeNotifierProvider(create: (_) => DrugManager()),
+        ChangeNotifierProvider(create: (_) => SearchHistoryManager()),
+        ChangeNotifierProvider(create: (_) => DrugFavoriteManager()),
+        ChangeNotifierProxyProvider<
+          DrugPrescriptionManager,
+          NotificationManager
+        >(
           create: (_) => NotificationManager(
             notificationStatus: notificationStatus,
             notificationTimes: notificationTimes,
           ),
+          update: (_, drugPrescriptionManager, notificationManager) =>
+              notificationManager!..updateNotification(drugPrescriptionManager),
         ),
-        ChangeNotifierProvider(create: (_) => DrugManager()),
-        ChangeNotifierProvider(create: (_) => DrugPrescriptionManager()),
-        ChangeNotifierProvider(create: (_) => SearchHistoryManager()),
-        ChangeNotifierProvider(create: (_) => DrugFavoriteManager()),
       ],
       child: const MyApp(),
     ),

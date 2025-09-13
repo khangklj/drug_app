@@ -1,7 +1,6 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:collection/collection.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
-import 'package:drug_app/manager/notification_manager.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/ui/components/loading_dialog.dart';
@@ -276,18 +275,6 @@ class _DrugPrescriptionEditScreenState
                 }
 
                 if (context.mounted) {
-                  final activeNotificationTimes = context
-                      .read<DrugPrescriptionManager>()
-                      .getActiveNotificationTimes();
-                  for (final activeNotificationTime
-                      in activeNotificationTimes) {
-                    context
-                        .read<NotificationManager>()
-                        .scheduleDailyNotification(activeNotificationTime);
-                  }
-                }
-
-                if (context.mounted) {
                   Navigator.of(context).pop();
                   AwesomeDialog(
                     context: context,
@@ -524,6 +511,17 @@ class _DrugPrescriptionEditScreenState
                                     double.tryParse(value) == null ||
                                     double.tryParse(value) == 0.0) {
                                   controller.text = '0.0';
+                                }
+
+                                //If value starts with 0 and any number, remove leading 0.
+                                if (value.startsWith('0') && value.length > 1) {
+                                  controller.text = value.substring(1);
+
+                                  //Move the cursor to the left of decimal point
+                                  controller.selection =
+                                      TextSelection.fromPosition(
+                                        TextPosition(offset: 1),
+                                      );
                                 }
                               });
                             },

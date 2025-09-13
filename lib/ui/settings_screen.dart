@@ -217,34 +217,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Text("Thông báo", style: Theme.of(context).textTheme.titleLarge),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Table(
+              columnWidths: const {
+                0: FlexColumnWidth(),
+                1: IntrinsicColumnWidth(),
+              },
+              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
               children: [
-                if (manager.notificationStatus.isGranted) ...[
-                  Text("Ứng dụng đã được cấp quyền thông báo"),
-                  const Icon(Icons.check_circle),
-                ] else if (manager.notificationStatus.isDenied) ...[
-                  Text("Ứng dụng chưa được cấp quyền thông báo"),
-                  TextButton.icon(
-                    icon: const Icon(Icons.notifications_active_outlined),
-                    onPressed: manager.requestNotificationPermission,
-                    label: Text("Bật thông báo"),
+                if (manager.notificationStatus.isGranted)
+                  TableRow(
+                    children: [
+                      Text("Đã cấp quyền thông báo"),
+                      const Icon(Icons.check_circle),
+                    ],
+                  )
+                else if (manager.notificationStatus.isDenied)
+                  TableRow(
+                    children: [
+                      Text("Chưa được cấp quyền thông báo"),
+                      TextButton.icon(
+                        icon: const Icon(Icons.notifications_active_outlined),
+                        onPressed: manager.requestNotificationPermission,
+                        label: const Text("Bật thông báo"),
+                      ),
+                    ],
+                  )
+                else if (manager.notificationStatus.isPermanentlyDenied)
+                  TableRow(
+                    children: [
+                      Text("Thông báo đã bị tắt"),
+                      TextButton.icon(
+                        icon: const Icon(Icons.settings),
+                        onPressed:
+                            manager.requestPermanentNotificationPermission,
+                        label: const Text("Chỉnh sửa"),
+                      ),
+                    ],
+                  )
+                else
+                  TableRow(
+                    children: [
+                      Text("Không truy cập được quyền thông báo"),
+                      TextButton.icon(
+                        icon: const Icon(Icons.settings),
+                        onPressed:
+                            manager.requestPermanentNotificationPermission,
+                        label: const Text("Chỉnh sửa"),
+                      ),
+                    ],
                   ),
-                ] else if (manager.notificationStatus.isPermanentlyDenied) ...[
-                  Text("Thông báo đã bị tắt"),
-                  TextButton.icon(
-                    icon: const Icon(Icons.settings),
-                    onPressed: manager.requestPermanentNotificationPermission,
-                    label: Text("Chỉnh sửa"),
-                  ),
-                ] else ...[
-                  Text("Không truy cập được quyền thông báo"),
-                  TextButton.icon(
-                    icon: const Icon(Icons.settings),
-                    onPressed: manager.requestPermanentNotificationPermission,
-                    label: Text("Chỉnh sửa"),
-                  ),
-                ],
               ],
             ),
             const SizedBox(height: 6.0),
@@ -252,48 +273,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
               "Mốc thời gian thông báo",
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            ...TimeOfDayValues.values.map((timeOfDay) {
-              final scheduledTime = manager.notificationTimes[timeOfDay];
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(timeOfDay.toDisplayString()),
-                  if (scheduledTime == null) ...[
-                    Text("Chưa đặt thời gian"),
-                  ] else ...[
-                    Text(DateFormat('HH:mm:ss').format(scheduledTime)),
-                  ],
-                  TextButton(
-                    onPressed: () {
-                      DatePicker.showTimePicker(
-                        context,
-                        showTitleActions: true,
-                        onConfirm: (newScheduledTime) {
-                          manager.setScheduledTime(timeOfDay, newScheduledTime);
-                          final activeNotifcationTimes = context
-                              .read<DrugPrescriptionManager>()
-                              .getActiveNotificationTimes();
-                          if (activeNotifcationTimes.contains(timeOfDay)) {
-                            manager.scheduleDailyNotification(timeOfDay);
-                          }
-                        },
-                        currentTime: scheduledTime ?? DateTime.now(),
-                        locale: LocaleType.vi,
-                      );
-                    },
-                    child: Text(
-                      'Chọn thời gian',
-                      style: TextStyle(color: Colors.blue),
+            Table(
+              columnWidths: const {
+                0: FlexColumnWidth(1.5), // For the TimeOfDay Text
+                1: FlexColumnWidth(2.5), // For the scheduled time Text
+                2: FlexColumnWidth(2.0), // For the TextButton
+              },
+              children: TimeOfDayValues.values.map((timeOfDay) {
+                final scheduledTime = manager.notificationTimes[timeOfDay];
+                return TableRow(
+                  children: [
+                    TableCell(
+                      verticalAlignment: TableCellVerticalAlignment.middle,
+                      child: Text(timeOfDay.toDisplayString()),
                     ),
-                  ),
-                ],
-              );
-            }),
+                    TableCell(
+                      verticalAlignment: TableCellVerticalAlignment.middle,
+                      child: scheduledTime == null
+                          ? Text("Chưa đặt thời gian")
+                          : Text(DateFormat('HH:mm:ss').format(scheduledTime)),
+                    ),
+                    TableCell(
+                      verticalAlignment: TableCellVerticalAlignment.middle,
+                      child: TextButton(
+                        onPressed: () {
+                          DatePicker.showTimePicker(
+                            context,
+                            showTitleActions: true,
+                            onConfirm: (newScheduledTime) {
+                              manager.setScheduledTime(
+                                timeOfDay,
+                                newScheduledTime,
+                              );
+                              final activeNotificationTimes = context
+                                  .read<DrugPrescriptionManager>()
+                                  .getActiveNotificationTimes();
+                              if (activeNotificationTimes.contains(timeOfDay)) {
+                                manager.scheduleDailyNotification(timeOfDay);
+                              }
+                            },
+                            currentTime: scheduledTime ?? DateTime.now(),
+                            locale: LocaleType.vi,
+                          );
+                        },
+                        child: Text(
+                          'Chọn thời gian',
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
             Align(
               alignment: Alignment.center,
               child: TextButton.icon(
                 onPressed: () async {
-                  await manager.removeAllScheduledTimes();
+                  await manager.cancelAllDailyNotifications();
                 },
                 label: Text("Đặt lại tất cả mốc thời gian"),
               ),

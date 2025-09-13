@@ -25,14 +25,12 @@ class HomePageScreen extends StatefulWidget {
 }
 
 class _HomePageScreenState extends State<HomePageScreen> {
-  late Future<void> _initSettings;
   late Future<void> _fetchDrugsMetadata;
   late Future<void> _fetchFavoriteDrugs;
 
   @override
   void initState() {
     super.initState();
-    _initSettings = context.read<SettingsManager>().initSettings();
     _fetchDrugsMetadata = context.read<DrugManager>().fetchDrugsMetadata();
     _fetchFavoriteDrugs = context
         .read<DrugFavoriteManager>()
@@ -43,11 +41,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
   Widget build(BuildContext context) {
     int textBreakPoints = 600;
     return FutureBuilder(
-      future: Future.wait([
-        _initSettings,
-        _fetchDrugsMetadata,
-        _fetchFavoriteDrugs,
-      ]),
+      future: Future.wait([_fetchDrugsMetadata, _fetchFavoriteDrugs]),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
