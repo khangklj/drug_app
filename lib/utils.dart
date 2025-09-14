@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 
 Future<String> getDeviceId({bool isEncoded = true}) async {
@@ -21,4 +22,16 @@ Future<String> getDeviceId({bool isEncoded = true}) async {
   }
 
   return isEncoded ? base64.encode(utf8.encode(id)) : id;
+}
+
+Future<File?> pickImage(ImageSource source) async {
+  File? imageFile;
+  final imagePicker = ImagePicker();
+  final pickedFile = await imagePicker.pickImage(source: source);
+
+  if (pickedFile != null) {
+    imageFile = File(pickedFile.path);
+    return imageFile;
+  }
+  return null;
 }

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
-class LoadingDialog extends StatefulWidget {
-  const LoadingDialog({super.key});
+class MediAppLoadingDialog extends StatefulWidget {
+  const MediAppLoadingDialog({super.key});
 
   @override
-  State<LoadingDialog> createState() => _LoadingDialogState();
+  State<MediAppLoadingDialog> createState() => _MediAppLoadingDialogState();
 }
 
-class _LoadingDialogState extends State<LoadingDialog> {
+class _MediAppLoadingDialogState extends State<MediAppLoadingDialog> {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
@@ -36,11 +37,7 @@ class _LoadingDialogState extends State<LoadingDialog> {
                   ],
                 ),
                 child: const Center(
-                  child: CircularProgressIndicator(),
-                  // child: SpinKitCubeGrid(
-                  //   color: Colors.indigoAccent,
-                  //   size: 50,
-                  // ),
+                  child: SpinKitCubeGrid(color: Colors.indigoAccent, size: 50),
                 ),
               ),
             ),

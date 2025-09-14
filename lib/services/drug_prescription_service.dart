@@ -6,7 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class DrugPrescriptionService {
-  var logger = Logger();
+  var _logger = Logger();
   late final DrugPrescriptionItemService _dpItemService;
 
   DrugPrescriptionService() {
@@ -46,7 +46,7 @@ class DrugPrescriptionService {
 
       return drugPrescriptions;
     } catch (error) {
-      logger.e("Fail to fetch drug prescriptions: $error");
+      _logger.e("Fail to fetch drug prescriptions: $error");
       return [];
     }
   }
@@ -81,7 +81,7 @@ class DrugPrescriptionService {
 
       return newDP;
     } catch (error) {
-      logger.e("Fail to add drug prescription: $error");
+      _logger.e("Fail to add drug prescription: $error");
       return null;
     }
   }
@@ -98,14 +98,6 @@ class DrugPrescriptionService {
           .getOne(drugPrescription.id!, expand: 'items');
       final List<DrugPrescriptionItem> existingDPItems =
           _parseDrugPrescriptionItems(dpModel);
-      // for (final dpItem in drugPrescription.items) {
-      //   print(dpItem.id);
-      // }
-      // print("+++++++");
-      // for (final dpItem in existingDPItems) {
-      //   print(dpItem.id);
-      // }
-      // return null;
       for (final dpItem in drugPrescription.items) {
         if (dpItem.id == null) {
           final newDPItem = await _dpItemService.addDrugPrescriptionItem(
@@ -152,8 +144,35 @@ class DrugPrescriptionService {
       );
       return updatedDP;
     } catch (error) {
-      logger.e("Fail to update drug prescription: $error");
+      _logger.e("Fail to update drug prescription: $error");
       return null;
+    }
+  }
+
+  Future<bool> removeDrugPrescription(String id) async {
+    try {
+      final pb = await getPocketBaseInstance();
+
+      // Delete items first
+      final dpModel = await pb
+          .collection('drug_prescription')
+          .getOne(id, expand: 'items');
+      final dpItems = _parseDrugPrescriptionItems(dpModel);
+      for (final dpItem in dpItems) {
+        final isDeleted = await _dpItemService.removeDrugPrescriptionItem(
+          dpItem.id!,
+        );
+        if (!isDeleted) {
+          throw Exception("Fail to delete drug prescription item");
+        }
+      }
+
+      // Delete record
+      await pb.collection('drug_prescription').delete(id);
+      return true;
+    } catch (error) {
+      _logger.e("Fail to remove drug prescription: $error");
+      return false;
     }
   }
 }

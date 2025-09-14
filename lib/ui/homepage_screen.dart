@@ -283,9 +283,8 @@ class _ScanningButtonState extends State<ScanningButton> {
                 return;
               }
               _showLoadingDialog();
-              final OCRDrugLabelModel? ocrResult = await OcrService().postImage(
-                file,
-              );
+              final OCRDrugLabelModel? ocrResult = await OcrService()
+                  .postDrugLabelImage(file);
               // Hide loading dialog
               if (context.mounted) {
                 Navigator.of(context).pop();

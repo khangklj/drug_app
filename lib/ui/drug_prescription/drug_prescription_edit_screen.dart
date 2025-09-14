@@ -3,7 +3,7 @@ import 'package:collection/collection.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
-import 'package:drug_app/ui/components/loading_dialog.dart';
+import 'package:drug_app/ui/components/medi_app_loading_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -265,7 +265,7 @@ class _DrugPrescriptionEditScreenState
                   barrierDismissible: false,
                   context: context,
                   builder: (context) {
-                    return const LoadingDialog();
+                    return const MediAppLoadingDialog();
                   },
                 );
 
@@ -327,9 +327,8 @@ class _DrugPrescriptionEditScreenState
                 const SizedBox(height: 20),
                 Text(
                   "Thông tin toa thuốc",
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-                TextButton(onPressed: () {}, child: const Text("DEMO")),
                 const SizedBox(height: 20),
                 SwitchListTile(
                   secondary: const Icon(Icons.watch_later_outlined),
@@ -373,6 +372,67 @@ class _DrugPrescriptionEditScreenState
                   },
                 ),
                 const SizedBox(height: 20),
+                if (widget.isEditState) ...[
+                  TextButton.icon(
+                    label: Text("Xóa toa thuốc"),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      iconColor: Colors.white,
+                      backgroundColor: Colors.red,
+                    ),
+                    icon: Icon(Icons.delete_forever_outlined),
+                    onPressed: () async {
+                      AwesomeDialog(
+                        context: context,
+                        dialogType: DialogType.warning,
+                        animType: AnimType.scale,
+                        title: 'Xóa toa thuốc',
+                        desc:
+                            'Hành động này không thể hoàn tác.\nXóa toa thuốc này?',
+                        btnOkOnPress: () async {
+                          showDialog(
+                            barrierDismissible: false,
+                            context: context,
+                            builder: (context) {
+                              return const MediAppLoadingDialog();
+                            },
+                          );
+                          if (context.mounted) {
+                            await context
+                                .read<DrugPrescriptionManager>()
+                                .deleteDrugPrescription(drugPrescription.id!);
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                              AwesomeDialog(
+                                context: context,
+                                dialogType: DialogType.info,
+                                animType: AnimType.scale,
+                                title: 'Xóa toa thuốc thành công',
+                                btnOkOnPress: () {
+                                  Navigator.of(context).pop();
+                                },
+                                onDismissCallback: (type) {
+                                  if (type != DismissType.btnOk) {
+                                    Navigator.of(context).pop();
+                                  }
+                                },
+                                btnOkIcon: Icons.check_circle,
+                                btnCancel: null,
+                                btnOkText: 'OK',
+                              ).show();
+                            }
+                          }
+                        },
+                        btnCancelOnPress: () async {},
+                        btnOkIcon: Icons.delete_forever,
+                        btnOkColor: Colors.red,
+                        btnOkText: 'Đồng ý',
+                        btnCancelText: 'Từ chối',
+                        btnCancelColor: Colors.grey,
+                      ).show();
+                    },
+                  ),
+                ],
                 TextButton.icon(
                   label: Text("Thêm thuốc mới"),
                   icon: Icon(Icons.add_box_outlined),

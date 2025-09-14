@@ -42,6 +42,13 @@ class DrugPrescriptionManager with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> deleteDrugPrescription(String id) async {
+    final isDeleted = await _drugPrescriptionService.removeDrugPrescription(id);
+    if (!isDeleted) return;
+    _drugPrescriptionList.removeWhere((dp) => dp.id == id);
+    notifyListeners();
+  }
+
   Set<TimeOfDayValues> getActiveNotificationTimes() {
     final timeOfDays = <TimeOfDayValues>{};
     for (final dp in _drugPrescriptionList) {
