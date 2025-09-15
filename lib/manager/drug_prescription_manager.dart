@@ -14,8 +14,9 @@ class DrugPrescriptionManager with ChangeNotifier {
   }
 
   Future<void> fetchDrugPrescriptions() async {
+    final deviceId = await getDeviceId();
     _drugPrescriptionList = await _drugPrescriptionService
-        .fetchDrugPrescriptions();
+        .fetchDrugPrescriptions(deviceId: deviceId);
     notifyListeners();
   }
 

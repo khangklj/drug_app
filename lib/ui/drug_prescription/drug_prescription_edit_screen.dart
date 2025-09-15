@@ -4,11 +4,31 @@ import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/ui/components/medi_app_loading_dialog.dart';
+import 'package:drug_app/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+
+int sortCardsByDrugNameComparator(
+  DrugPrescriptionCardModel a,
+  DrugPrescriptionCardModel b, {
+  bool ascending = true,
+}) {
+  final nameA = a.drugName.trim();
+  final nameB = b.drugName.trim();
+
+  // Empty always last
+  if (nameA.isEmpty && nameB.isEmpty) return 0;
+  if (nameA.isEmpty) return 1;
+  if (nameB.isEmpty) return -1;
+
+  // Normal compare
+  return ascending
+      ? nameA.compareTo(nameB) // A–Z
+      : nameB.compareTo(nameA); // Z–A
+}
 
 class DrugPrescriptionCardModel {
   final String id;
@@ -84,12 +104,28 @@ class _DrugPrescriptionEditScreenState
 
   var uuid = Uuid();
 
+  final ScrollController _scrollController = ScrollController();
+  bool _showBackToTopButton = false;
+  bool _isSortAscending = true;
+
   @override
   void initState() {
     super.initState();
     drugPrescription = widget.drugPrescription;
     _initCards();
     _initControllers();
+
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 300) {
+        if (!_showBackToTopButton) {
+          setState(() => _showBackToTopButton = true);
+        }
+      } else {
+        if (_showBackToTopButton) {
+          setState(() => _showBackToTopButton = false);
+        }
+      }
+    });
   }
 
   @override
@@ -121,6 +157,7 @@ class _DrugPrescriptionEditScreenState
       );
       cards.add(cardModel);
     });
+    _resortCards();
 
     // Add a card if empty
     if (cards.isEmpty) {
@@ -133,7 +170,7 @@ class _DrugPrescriptionEditScreenState
       _controllers[card.id] = {};
       for (var time in TimeOfDayValues.values) {
         _controllers[card.id]![time] = TextEditingController(
-          text: card.dailyDosages[time]?.toString() ?? '0.0',
+          text: formatDoubleNumberToString(card.dailyDosages[time] ?? 0),
         );
       }
     }
@@ -151,7 +188,7 @@ class _DrugPrescriptionEditScreenState
       cards.add(cardModel);
       _controllers[id] = {};
       for (var time in TimeOfDayValues.values) {
-        _controllers[id]![time] = TextEditingController(text: '0.0');
+        _controllers[id]![time] = TextEditingController(text: '0');
       }
     });
   }
@@ -207,7 +244,7 @@ class _DrugPrescriptionEditScreenState
       return null;
     }
 
-    final formatter = DateFormat('ssmmHHddMMyyyy');
+    final formatter = DateFormat('yyyyMMddHHmmss');
     final generatedCustomName =
         'Toa thuốc ${formatter.format(DateTime.now().toLocal())}';
 
@@ -228,6 +265,16 @@ class _DrugPrescriptionEditScreenState
     );
 
     return dp;
+  }
+
+  void _resortCards() {
+    _isSortAscending = !_isSortAscending;
+    setState(() {
+      cards.sort(
+        (a, b) =>
+            sortCardsByDrugNameComparator(a, b, ascending: _isSortAscending),
+      );
+    });
   }
 
   @override
@@ -316,7 +363,23 @@ class _DrugPrescriptionEditScreenState
           ),
         ],
       ),
+      floatingActionButton: _showBackToTopButton
+          ? ClipOval(
+              child: FloatingActionButton(
+                elevation: 4.0,
+                onPressed: () {
+                  _scrollController.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                child: Icon(Icons.arrow_upward),
+              ),
+            )
+          : null,
       body: SingleChildScrollView(
+        controller: _scrollController,
         child: Form(
           key: _formKey,
           child: Padding(
@@ -361,6 +424,32 @@ class _DrugPrescriptionEditScreenState
                   },
                 ),
                 const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Danh sách thuốc',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _isSortAscending ? Text("A-Z") : Text("Z-A"),
+                          IconButton(
+                            icon: const Icon(Icons.sort),
+                            onPressed: () {
+                              _resortCards();
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
                 ListView.separated(
                   separatorBuilder: (context, index) =>
                       const SizedBox(height: 20),
@@ -372,6 +461,13 @@ class _DrugPrescriptionEditScreenState
                   },
                 ),
                 const SizedBox(height: 20),
+                TextButton.icon(
+                  label: Text("Thêm thuốc mới"),
+                  icon: Icon(Icons.add_box_outlined),
+                  onPressed: () {
+                    _addNewCard();
+                  },
+                ),
                 if (widget.isEditState) ...[
                   TextButton.icon(
                     label: Text("Xóa toa thuốc"),
@@ -433,13 +529,6 @@ class _DrugPrescriptionEditScreenState
                     },
                   ),
                 ],
-                TextButton.icon(
-                  label: Text("Thêm thuốc mới"),
-                  icon: Icon(Icons.add_box_outlined),
-                  onPressed: () {
-                    _addNewCard();
-                  },
-                ),
               ],
             ),
           ),

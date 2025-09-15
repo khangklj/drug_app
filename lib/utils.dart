@@ -35,3 +35,13 @@ Future<File?> pickImage(ImageSource source) async {
   }
   return null;
 }
+
+String formatDoubleNumberToString(double value) {
+  if (value % 1 == 0) {
+    // no fractional part → show as int
+    return value.toInt().toString();
+  } else {
+    // has fractional part → keep as double
+    return value.toString();
+  }
+}

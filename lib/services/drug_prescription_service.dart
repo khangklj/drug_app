@@ -6,7 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class DrugPrescriptionService {
-  var _logger = Logger();
+  final _logger = Logger();
   late final DrugPrescriptionItemService _dpItemService;
 
   DrugPrescriptionService() {
@@ -28,13 +28,15 @@ class DrugPrescriptionService {
     return drugPrescriptionItems;
   }
 
-  Future<List<DrugPrescription>> fetchDrugPrescriptions() async {
+  Future<List<DrugPrescription>> fetchDrugPrescriptions({
+    required String deviceId,
+  }) async {
     final List<DrugPrescription> drugPrescriptions = [];
     try {
       final pb = await getPocketBaseInstance();
       final recordList = await pb
           .collection('drug_prescription')
-          .getFullList(expand: 'items');
+          .getFullList(expand: 'items', filter: "device_id = '$deviceId'");
       for (final record in recordList) {
         final dpItems = _parseDrugPrescriptionItems(record);
         drugPrescriptions.add(

@@ -1,6 +1,7 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:drug_app/manager/drug_favorite_manager.dart';
 import 'package:drug_app/manager/search_history_manager.dart';
+import 'package:drug_app/ui/components/medi_app_drawer.dart';
 import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,11 +16,8 @@ class DrugFavoriteScreen extends StatelessWidget {
     final drugs = context.watch<DrugFavoriteManager>().drugs;
     final searchHistoryManager = context.read<SearchHistoryManager>();
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: true,
-        title: const Text("Danh sách yêu thích"),
-        elevation: 4.0,
-      ),
+      appBar: AppBar(title: const Text("Danh sách yêu thích"), elevation: 4.0),
+      drawer: MediAppDrawer(),
       body: ListView.separated(
         separatorBuilder: (context, index) => const Divider(),
         itemCount: drugs.length,
