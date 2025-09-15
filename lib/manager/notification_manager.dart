@@ -5,11 +5,71 @@ import 'package:flutter/widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class NotificationTimeData {
+  final int hour;
+  final int minute;
+  final int second;
+
+  NotificationTimeData({
+    required this.hour,
+    required this.minute,
+    required this.second,
+  });
+
+  NotificationTimeData copyWith({int? hour, int? minute, int? second}) {
+    return NotificationTimeData(
+      hour: hour ?? this.hour,
+      minute: minute ?? this.minute,
+      second: second ?? this.second,
+    );
+  }
+
+  @override
+  String toString() => '$hour:$minute:$second';
+
+  DateTime toDateTime() {
+    return DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+      hour,
+      minute,
+      second,
+    );
+  }
+
+  static NotificationTimeData? tryParseFromString(String time) {
+    final parts = time.split(':');
+    if (parts.length == 3) {
+      int? parsedHour = int.tryParse(parts[0]);
+      int? parsedMinute = int.tryParse(parts[1]);
+      int? parsedSecond = int.tryParse(parts[2]);
+      if (parsedHour != null && parsedMinute != null && parsedSecond != null) {
+        return NotificationTimeData(
+          hour: parsedHour,
+          minute: parsedMinute,
+          second: parsedSecond,
+        );
+      }
+    }
+    return null;
+  }
+
+  static NotificationTimeData parseFromDateTime(DateTime time) {
+    return NotificationTimeData(
+      hour: time.hour,
+      minute: time.minute,
+      second: time.second,
+    );
+  }
+}
+
 class NotificationManager with ChangeNotifier {
   late PermissionStatus _notificationStatus;
   late final NotificationService _notificationService;
-  late final Map<TimeOfDayValues, DateTime?> _notificationTimes;
-  late final Map<TimeOfDayValues, DateTime> _defaultNotificationTimes;
+  late final Map<TimeOfDayValues, NotificationTimeData?> _notificationTimes;
+  late final Map<TimeOfDayValues, NotificationTimeData>
+  _defaultNotificationTimes;
   final Map<TimeOfDayValues, int> _notificationMapIds = {
     TimeOfDayValues.morning: 1312,
     TimeOfDayValues.noon: 1313,
@@ -18,7 +78,8 @@ class NotificationManager with ChangeNotifier {
   };
 
   PermissionStatus get notificationStatus => _notificationStatus;
-  Map<TimeOfDayValues, DateTime?> get notificationTimes => _notificationTimes;
+  Map<TimeOfDayValues, NotificationTimeData?> get notificationTimes =>
+      _notificationTimes;
 
   Future<void> initSettings() async {
     _notificationService = NotificationService();
@@ -26,18 +87,25 @@ class NotificationManager with ChangeNotifier {
     _notificationTimes = {};
 
     _defaultNotificationTimes = {
-      TimeOfDayValues.morning: _notificationService.nextInstanceOfDailyReminder(
-        DateTime.now().copyWith(hour: 6, minute: 0, second: 0),
+      TimeOfDayValues.morning: NotificationTimeData(
+        hour: 6,
+        minute: 0,
+        second: 0,
       ),
-      TimeOfDayValues.noon: _notificationService.nextInstanceOfDailyReminder(
-        DateTime.now().copyWith(hour: 11, minute: 0, second: 0),
+      TimeOfDayValues.noon: NotificationTimeData(
+        hour: 11,
+        minute: 0,
+        second: 0,
       ),
-      TimeOfDayValues.afternoon: _notificationService
-          .nextInstanceOfDailyReminder(
-            DateTime.now().copyWith(hour: 16, minute: 0, second: 0),
-          ),
-      TimeOfDayValues.evening: _notificationService.nextInstanceOfDailyReminder(
-        DateTime.now().copyWith(hour: 21, minute: 0, second: 0),
+      TimeOfDayValues.afternoon: NotificationTimeData(
+        hour: 16,
+        minute: 0,
+        second: 0,
+      ),
+      TimeOfDayValues.evening: NotificationTimeData(
+        hour: 21,
+        minute: 0,
+        second: 0,
       ),
     };
 
@@ -46,11 +114,15 @@ class NotificationManager with ChangeNotifier {
       final key = _notificationMapIds[timeOfDay]!.toString();
       final time = prefs.getString(key);
       if (time != null) {
-        _notificationTimes[timeOfDay] = DateTime.parse(time).toLocal();
+        _notificationTimes[timeOfDay] = NotificationTimeData.tryParseFromString(
+          time,
+        );
+        await prefs.setString(key, _notificationTimes[timeOfDay]!.toString());
       } else {
-        final DateTime? defaultTime = _defaultNotificationTimes[timeOfDay];
+        final NotificationTimeData? defaultTime =
+            _defaultNotificationTimes[timeOfDay];
         _notificationTimes[timeOfDay] = defaultTime;
-        await prefs.setString(key, defaultTime!.toIso8601String());
+        await prefs.setString(key, defaultTime!.toString());
       }
     }
   }
@@ -69,12 +141,6 @@ class NotificationManager with ChangeNotifier {
     }
   }
 
-  Future<void> checkPermissionStatus() async {
-    final status = await Permission.notification.status;
-    _notificationStatus = status;
-    notifyListeners();
-  }
-
   Future<void> requestNotificationPermission() async {
     if (_notificationStatus.isGranted) return;
 
@@ -85,35 +151,50 @@ class NotificationManager with ChangeNotifier {
 
   Future<void> requestPermanentNotificationPermission() async {
     await openAppSettings();
-    await checkPermissionStatus();
+    final status = await Permission.notification.status;
+    _notificationStatus = status;
+    notifyListeners();
   }
 
   Future<void> setScheduledTime(
     TimeOfDayValues timeOfDay,
     DateTime time,
   ) async {
+    if (!_notificationStatus.isGranted) {
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
     final key = _notificationMapIds[timeOfDay]!.toString();
-    await prefs.setString(key, time.toIso8601String());
-    _notificationTimes[timeOfDay] = time;
+    final NotificationTimeData timeData =
+        NotificationTimeData.parseFromDateTime(time);
+    await prefs.setString(key, timeData.toString());
+    _notificationTimes[timeOfDay] = NotificationTimeData.parseFromDateTime(
+      time,
+    );
     notifyListeners();
   }
 
   Future<void> resetScheduledTime(TimeOfDayValues timeOfDay) async {
+    if (!_notificationStatus.isGranted) {
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
     final key = _notificationMapIds[timeOfDay]!.toString();
     final defaultNotificationTime = _defaultNotificationTimes[timeOfDay]!;
-    await prefs.setString(key, defaultNotificationTime.toIso8601String());
+    await prefs.setString(key, defaultNotificationTime.toString());
     _notificationTimes[timeOfDay] = defaultNotificationTime;
     notifyListeners();
   }
 
   Future<void> resetAllScheduledTimes() async {
+    if (!_notificationStatus.isGranted) {
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
     for (final timeOfDay in TimeOfDayValues.values) {
       final key = _notificationMapIds[timeOfDay]!.toString();
       final defaultNotificationTime = _defaultNotificationTimes[timeOfDay]!;
-      await prefs.setString(key, defaultNotificationTime.toIso8601String());
+      await prefs.setString(key, defaultNotificationTime.toString());
 
       // Only reschedule if notification is already scheduled
       final DateTime? scheduledTime = await _notificationService
@@ -122,7 +203,7 @@ class NotificationManager with ChangeNotifier {
         await _notificationService.cancelDailyNotification(timeOfDay);
         await _notificationService.scheduleDailyNotification(
           timeOfDay,
-          defaultNotificationTime,
+          defaultNotificationTime.toDateTime(),
         );
       }
 
@@ -135,7 +216,7 @@ class NotificationManager with ChangeNotifier {
     required TimeOfDayValues timeOfDay,
     DateTime? scheduledTime,
   }) async {
-    scheduledTime ??= _notificationTimes[timeOfDay]!;
+    scheduledTime ??= _notificationTimes[timeOfDay]!.toDateTime();
     await _notificationService.scheduleDailyNotification(
       timeOfDay,
       scheduledTime,

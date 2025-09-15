@@ -30,7 +30,7 @@ Future<void> main() async {
   await notificationService.initSettings((payload) {
     if (payload != null && payload.isNotEmpty) {
       // navigatorKey.currentState?.pushNamed(payload);
-      print(payload);
+      //TODO: Implement display notification payload screen
     }
   });
 

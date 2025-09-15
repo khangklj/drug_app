@@ -292,7 +292,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       verticalAlignment: TableCellVerticalAlignment.middle,
                       child: currentTime == null
                           ? Text("Chưa đặt thời gian")
-                          : Text(DateFormat('HH:mm:ss').format(currentTime)),
+                          : Text(
+                              DateFormat(
+                                'HH:mm:ss',
+                              ).format(currentTime.toDateTime()),
+                            ),
                     ),
                     TableCell(
                       verticalAlignment: TableCellVerticalAlignment.middle,
@@ -322,6 +326,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   animType: AnimType.scale,
                                   title: 'Đặt mốc thời gian',
                                   desc: 'Thời gian này đã được sử dụng',
+                                  btnOkOnPress: () {},
+                                  btnOkIcon: Icons.check_circle,
+                                  btnOkText: 'OK',
+                                ).show();
+                                return;
+                              }
+
+                              if (!manager.notificationStatus.isGranted) {
+                                AwesomeDialog(
+                                  context: context,
+                                  dialogType: DialogType.error,
+                                  animType: AnimType.scale,
+                                  title: 'Đặt thời gian',
+                                  desc:
+                                      'Chưa được cấp quyền thông báo.\nVui lòng cấp quyền để sử dụng',
                                   btnOkOnPress: () {},
                                   btnOkIcon: Icons.check_circle,
                                   btnOkText: 'OK',
@@ -366,6 +385,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     desc:
                         'Thao tác này sẽ đặt lại tất cả các mốc thời gian. Bạn có muốn tiếp tục không?',
                     btnOkOnPress: () async {
+                      if (!manager.notificationStatus.isGranted) {
+                        AwesomeDialog(
+                          context: context,
+                          dialogType: DialogType.error,
+                          animType: AnimType.scale,
+                          title: 'Đặt thời gian',
+                          desc:
+                              'Chưa được cấp quyền thông báo.\nVui lòng cấp quyền để sử dụng',
+                          btnOkOnPress: () {},
+                          btnOkIcon: Icons.check_circle,
+                          btnOkText: 'OK',
+                        ).show();
+                        return;
+                      }
                       await manager.resetAllScheduledTimes();
                     },
                     btnCancelOnPress: () async {},

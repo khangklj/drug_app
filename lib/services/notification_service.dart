@@ -180,19 +180,17 @@ class NotificationService {
       await _flutterLocalNotificationsPlugin.cancel(id);
     }
 
+    final time = nextInstanceOfDailyReminder(scheduleTime);
     await _flutterLocalNotificationsPlugin.zonedSchedule(
       id,
       'Nhắc nhở uống thuốc buổi ${timeOfDay.toDisplayString()}',
       'Nhấn vào đây để xem nhanh danh sách thuốc',
-      nextInstanceOfDailyReminder(scheduleTime),
+      time,
       NotificationDetails(android: _androidNotificationDetails),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
       payload: jsonEncode(
-        NotificationPayload(
-          timeOfDay: timeOfDay,
-          scheduledTime: scheduleTime,
-        ).toJson(),
+        NotificationPayload(timeOfDay: timeOfDay, scheduledTime: time).toJson(),
       ),
     );
   }
