@@ -4,6 +4,7 @@ import 'package:drug_app/manager/drug_favorite_manager.dart';
 import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/manager/settings_manager.dart';
 import 'package:drug_app/models/drug.dart';
+import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/models/ocr_drug_label_model.dart';
 import 'package:drug_app/services/ocr_service.dart';
 import 'package:drug_app/ui/components/image_source_dialog.dart';
@@ -11,6 +12,7 @@ import 'package:drug_app/ui/components/medi_app_drawer.dart';
 import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_delegate.dart';
+import 'package:drug_app/ui/drug_prescription/drug_prescription_payload_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -126,6 +128,18 @@ class MainWidget extends StatelessWidget {
               const SizedBox(height: 20),
 
               KeywordSearchEntry(),
+
+              //TODO: DELETE DEMO
+              const SizedBox(height: 20),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pushNamed(
+                    DrugPrescriptionPayloadScreen.routeName,
+                    arguments: TimeOfDayValues.evening,
+                  );
+                },
+                child: const Text("DEMO"),
+              ),
             ],
           ),
         ),

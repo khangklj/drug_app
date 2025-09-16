@@ -59,6 +59,9 @@ class NotificationService {
         priority: Priority.high,
       );
 
+  Future<NotificationAppLaunchDetails?> get notifcationAppLaunchDetails =>
+      _flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+
   Future<void> initSettings(
     Function(String? payload) onSelectNotification,
   ) async {

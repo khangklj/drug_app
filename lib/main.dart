@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:drug_app/manager/drug_favorite_manager.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
@@ -6,6 +7,7 @@ import 'package:drug_app/manager/search_history_manager.dart';
 import 'package:drug_app/manager/settings_manager.dart';
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/models/drug_prescription.dart';
+import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/services/notification_service.dart';
 import 'package:drug_app/shared/app_theme.dart';
 import 'package:drug_app/manager/drug_manager.dart';
@@ -13,6 +15,7 @@ import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:drug_app/ui/drug/drug_favorite_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_edit_screen.dart';
+import 'package:drug_app/ui/drug_prescription/drug_prescription_payload_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_screen.dart';
 import 'package:drug_app/ui/settings_screen.dart';
 import 'package:flutter/material.dart';
@@ -20,30 +23,53 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'screen_routing.dart';
 
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final globalNavigatorKey = GlobalKey<NavigatorState>();
+
+TimeOfDayValues getTimeFromPayload(String? payload) {
+  final NotificationPayload notificationPayload = NotificationPayload.fromJSON(
+    jsonDecode(payload!),
+  );
+  final timeOfDay = notificationPayload.timeOfDay;
+  return timeOfDay;
+}
 
 Future<void> main() async {
   await dotenv.load();
   WidgetsFlutterBinding.ensureInitialized();
   final notificationService = NotificationService();
+
   // Initialize notifications
   await notificationService.initSettings((payload) {
-    if (payload != null && payload.isNotEmpty) {
-      // navigatorKey.currentState?.pushNamed(payload);
-      //TODO: Implement display notification payload screen
-    }
+    final timeOfDay = getTimeFromPayload(payload);
+    globalNavigatorKey.currentState?.pushNamed(
+      DrugPrescriptionPayloadScreen.routeName,
+      arguments: timeOfDay,
+    );
   });
+
+  final settingsManager = SettingsManager();
+  await settingsManager.initSettings();
+
+  final drugPrescriptionManager = DrugPrescriptionManager();
+  await drugPrescriptionManager.fetchDrugPrescriptions();
+
+  final notifcationManager = NotificationManager();
+  await notifcationManager.initSettings();
+
+  final details = await notificationService.notifcationAppLaunchDetails;
+  late final TimeOfDayValues? timeOfDayFromNotification;
+  if (details != null && details.didNotificationLaunchApp) {
+    String? payload = details.notificationResponse?.payload;
+    timeOfDayFromNotification = getTimeFromPayload(payload);
+  } else {
+    timeOfDayFromNotification = null;
+  }
 
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => SettingsManager()..initSettings(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => DrugPrescriptionManager()..fetchDrugPrescriptions(),
-          lazy: false,
-        ),
+        ChangeNotifierProvider.value(value: settingsManager),
+        ChangeNotifierProvider.value(value: drugPrescriptionManager),
         ChangeNotifierProvider(create: (_) => DrugManager()),
         ChangeNotifierProvider(create: (_) => SearchHistoryManager()),
         ChangeNotifierProvider(create: (_) => DrugFavoriteManager()),
@@ -51,29 +77,38 @@ Future<void> main() async {
           DrugPrescriptionManager,
           NotificationManager
         >(
-          create: (_) => NotificationManager()..initSettings(),
+          create: (_) => notifcationManager,
           update: (_, drugPrescriptionManager, notificationManager) =>
               notificationManager!..updateNotification(drugPrescriptionManager),
           lazy: false,
         ),
       ],
-      child: const MyApp(),
+      child: MyApp(
+        startScreen: timeOfDayFromNotification == null
+            ? const HomePageScreen()
+            : DrugPrescriptionPayloadScreen(
+                timeOfDay: timeOfDayFromNotification,
+              ),
+      ),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.startScreen});
+
+  final Widget startScreen;
 
   @override
   Widget build(BuildContext context) {
     ThemeMode themeMode = context.watch<SettingsManager>().themeMode;
     return MaterialApp(
       title: 'Flutter Demo',
+      navigatorKey: globalNavigatorKey,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
-      home: SafeArea(child: const HomePageScreen()),
+      home: startScreen,
       onGenerateRoute: (settings) {
         if (settings.name == HomePageScreen.routeName) {
           return MaterialPageRoute(
@@ -120,6 +155,15 @@ class MyApp extends StatelessWidget {
         if (settings.name == DrugFavoriteScreen.routeName) {
           return MaterialPageRoute(
             builder: (_) => SafeArea(child: DrugFavoriteScreen()),
+          );
+        }
+
+        if (settings.name == DrugPrescriptionPayloadScreen.routeName) {
+          final timeOfDay = settings.arguments as TimeOfDayValues;
+          return MaterialPageRoute(
+            builder: (_) => SafeArea(
+              child: DrugPrescriptionPayloadScreen(timeOfDay: timeOfDay),
+            ),
           );
         }
 
