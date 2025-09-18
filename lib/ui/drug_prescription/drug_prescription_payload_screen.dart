@@ -2,7 +2,7 @@ import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/ui/components/medi_app_drawer.dart';
-import 'package:drug_app/ui/homepage_screen.dart';
+import 'package:drug_app/ui/medi_app_homepage_screen.dart';
 import 'package:drug_app/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -35,7 +35,7 @@ class DrugPrescriptionPayloadScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.home_outlined),
             onPressed: () {
-              Navigator.of(context).pushNamed(HomePageScreen.routeName);
+              Navigator.of(context).pushNamed(MediAppHomepageScreen.routeName);
             },
           ),
         ],

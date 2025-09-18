@@ -1,6 +1,6 @@
-import 'package:drug_app/screen_routing.dart';
 import 'package:drug_app/ui/drug/drug_favorite_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_screen.dart';
+import 'package:drug_app/ui/medi_app_homepage_screen.dart';
 import 'package:drug_app/ui/settings_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -40,17 +40,9 @@ class MediAppDrawer extends StatelessWidget {
             ),
 
             onTap: () {
-              Navigator.of(context).popAndPushNamed(HomePageScreen.routeName);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.search),
-            title: Text(
-              'Tìm kiếm thuốc',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            onTap: () {
-              //TODO: Navigate to search screen
+              Navigator.of(
+                context,
+              ).popAndPushNamed(MediAppHomepageScreen.routeName);
             },
           ),
           ListTile(

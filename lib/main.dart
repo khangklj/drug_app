@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:drug_app/manager/drug_favorite_manager.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/manager/notification_manager.dart';
@@ -17,11 +16,11 @@ import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_edit_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_payload_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_screen.dart';
+import 'package:drug_app/ui/medi_app_homepage_screen.dart';
 import 'package:drug_app/ui/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'screen_routing.dart';
 
 final globalNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -85,7 +84,7 @@ Future<void> main() async {
       ],
       child: MyApp(
         startScreen: timeOfDayFromNotification == null
-            ? const HomePageScreen()
+            ? const MediAppHomepageScreen()
             : DrugPrescriptionPayloadScreen(
                 timeOfDay: timeOfDayFromNotification,
               ),
@@ -110,16 +109,9 @@ class MyApp extends StatelessWidget {
       themeMode: themeMode,
       home: startScreen,
       onGenerateRoute: (settings) {
-        if (settings.name == HomePageScreen.routeName) {
+        if (settings.name == MediAppHomepageScreen.routeName) {
           return MaterialPageRoute(
-            builder: (_) => SafeArea(child: const HomePageScreen()),
-          );
-        }
-
-        if (settings.name == ImageViewScreen.routeName) {
-          final image = settings.arguments as File;
-          return MaterialPageRoute(
-            builder: (_) => SafeArea(child: ImageViewScreen(image: image)),
+            builder: (_) => SafeArea(child: const MediAppHomepageScreen()),
           );
         }
 

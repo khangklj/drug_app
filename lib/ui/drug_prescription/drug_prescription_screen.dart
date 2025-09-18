@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:collection/collection.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/models/drug_prescription.dart';
@@ -50,6 +52,33 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
   }
 
   void _showAddingOptions() {
+    void handlePickedFile(File? file) async {
+      if (file != null && mounted) {
+        showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (context) {
+            return const MediAppLoadingDialog();
+          },
+        );
+        List<DrugPrescriptionItem> dpItems = await OcrService()
+            .postDrugPrescriptionImage(file);
+        DrugPrescription newDP = DrugPrescription(
+          id: null,
+          customName: null,
+          deviceId: null,
+          isActive: false,
+          items: dpItems,
+        );
+        if (mounted) {
+          Navigator.of(context).popAndPushNamed(
+            DrugPrescriptionEditScreen.routeName,
+            arguments: newDP,
+          );
+        }
+      }
+    }
+
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -85,32 +114,7 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
                       icon: Icon(Icons.camera_alt_outlined),
                       onTap: () async {
                         final pickedFile = await pickImage(ImageSource.camera);
-                        if (pickedFile != null && context.mounted) {
-                          showDialog(
-                            barrierDismissible: false,
-                            context: context,
-                            builder: (context) {
-                              return const MediAppLoadingDialog();
-                            },
-                          );
-                          List<DrugPrescriptionItem> dpItems =
-                              await OcrService().postDrugPrescriptionImage(
-                                pickedFile,
-                              );
-                          DrugPrescription newDP = DrugPrescription(
-                            id: null,
-                            customName: null,
-                            deviceId: null,
-                            isActive: false,
-                            items: dpItems,
-                          );
-                          if (context.mounted) {
-                            Navigator.of(context).popAndPushNamed(
-                              DrugPrescriptionEditScreen.routeName,
-                              arguments: newDP,
-                            );
-                          }
-                        }
+                        handlePickedFile(pickedFile);
                       },
                     ),
                   ),
@@ -121,32 +125,7 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
                       icon: Icon(Icons.photo_library_outlined),
                       onTap: () async {
                         final pickedFile = await pickImage(ImageSource.gallery);
-                        if (pickedFile != null && context.mounted) {
-                          showDialog(
-                            barrierDismissible: false,
-                            context: context,
-                            builder: (context) {
-                              return const MediAppLoadingDialog();
-                            },
-                          );
-                          List<DrugPrescriptionItem> dpItems =
-                              await OcrService().postDrugPrescriptionImage(
-                                pickedFile,
-                              );
-                          DrugPrescription newDP = DrugPrescription(
-                            id: null,
-                            customName: null,
-                            deviceId: null,
-                            isActive: false,
-                            items: dpItems,
-                          );
-                          if (context.mounted) {
-                            Navigator.of(context).popAndPushNamed(
-                              DrugPrescriptionEditScreen.routeName,
-                              arguments: newDP,
-                            );
-                          }
-                        }
+                        handlePickedFile(pickedFile);
                       },
                     ),
                   ),
