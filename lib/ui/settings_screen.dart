@@ -41,10 +41,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 15.0),
               const Divider(thickness: 1.2),
               const SizedBox(height: 15.0),
-              _buildScanningModeWidget(),
-              const SizedBox(height: 15.0),
-              const Divider(thickness: 1.2),
-              const SizedBox(height: 15.0),
+              // _buildScanningModeWidget(),
+              // const SizedBox(height: 15.0),
+              // const Divider(thickness: 1.2),
+              // const SizedBox(height: 15.0),
               _buildSelectSceduleTimeWidget(),
             ],
           ),
@@ -116,98 +116,98 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildScanningModeWidget() {
-    return Consumer<SettingsManager>(
-      builder: (context, settingsManager, child) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Chức năng quét nhanh',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          RadioListTile<ScanningModes>(
-            value: ScanningModes.camera,
-            groupValue: settingsManager.scanningMode,
-            onChanged: (value) {
-              settingsManager.toogleScanningOptions(value!);
-            },
-            title: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Luôn chọn ảnh từ ',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  TextSpan(
-                    text: 'camera',
-                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          RadioListTile<ScanningModes>(
-            value: ScanningModes.gallery,
-            groupValue: settingsManager.scanningMode,
-            onChanged: (value) {
-              settingsManager.toogleScanningOptions(value!);
-            },
-            title: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Luôn chọn ảnh từ ',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  TextSpan(
-                    text: 'thư viện ảnh',
-                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          RadioListTile<ScanningModes>(
-            value: ScanningModes.both,
-            groupValue: settingsManager.scanningMode,
-            onChanged: (value) {
-              settingsManager.toogleScanningOptions(value!);
-            },
-            title: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Chọn ảnh từ ',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  TextSpan(
-                    text: 'camera',
-                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  TextSpan(
-                    text: ' hoặc ',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  TextSpan(
-                    text: 'thư viện ảnh',
-                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildScanningModeWidget() {
+  //   return Consumer<SettingsManager>(
+  //     builder: (context, settingsManager, child) => Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Text(
+  //           'Chức năng quét nhanh',
+  //           style: Theme.of(context).textTheme.titleLarge,
+  //         ),
+  //         RadioListTile<ScanningModes>(
+  //           value: ScanningModes.camera,
+  //           groupValue: settingsManager.scanningMode,
+  //           onChanged: (value) {
+  //             settingsManager.toogleScanningOptions(value!);
+  //           },
+  //           title: Text.rich(
+  //             TextSpan(
+  //               children: [
+  //                 TextSpan(
+  //                   text: 'Luôn chọn ảnh từ ',
+  //                   style: Theme.of(context).textTheme.bodyLarge,
+  //                 ),
+  //                 TextSpan(
+  //                   text: 'camera',
+  //                   style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+  //                     fontWeight: FontWeight.bold,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //         RadioListTile<ScanningModes>(
+  //           value: ScanningModes.gallery,
+  //           groupValue: settingsManager.scanningMode,
+  //           onChanged: (value) {
+  //             settingsManager.toogleScanningOptions(value!);
+  //           },
+  //           title: Text.rich(
+  //             TextSpan(
+  //               children: [
+  //                 TextSpan(
+  //                   text: 'Luôn chọn ảnh từ ',
+  //                   style: Theme.of(context).textTheme.bodyLarge,
+  //                 ),
+  //                 TextSpan(
+  //                   text: 'thư viện ảnh',
+  //                   style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+  //                     fontWeight: FontWeight.bold,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //         RadioListTile<ScanningModes>(
+  //           value: ScanningModes.both,
+  //           groupValue: settingsManager.scanningMode,
+  //           onChanged: (value) {
+  //             settingsManager.toogleScanningOptions(value!);
+  //           },
+  //           title: Text.rich(
+  //             TextSpan(
+  //               children: [
+  //                 TextSpan(
+  //                   text: 'Chọn ảnh từ ',
+  //                   style: Theme.of(context).textTheme.bodyLarge,
+  //                 ),
+  //                 TextSpan(
+  //                   text: 'camera',
+  //                   style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+  //                     fontWeight: FontWeight.bold,
+  //                   ),
+  //                 ),
+  //                 TextSpan(
+  //                   text: ' hoặc ',
+  //                   style: Theme.of(context).textTheme.bodyLarge,
+  //                 ),
+  //                 TextSpan(
+  //                   text: 'thư viện ảnh',
+  //                   style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+  //                     fontWeight: FontWeight.bold,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildSelectSceduleTimeWidget() {
     return Consumer<NotificationManager>(
@@ -269,7 +269,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 6.0),
+            const SizedBox(height: 12.0),
             Text(
               "Mốc thời gian thông báo",
               style: Theme.of(context).textTheme.titleMedium,
@@ -286,7 +286,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     TableCell(
                       verticalAlignment: TableCellVerticalAlignment.middle,
-                      child: Text(timeOfDay.toDisplayString()),
+                      child: Text(
+                        timeOfDay.toDisplayString(),
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
                     ),
                     TableCell(
                       verticalAlignment: TableCellVerticalAlignment.middle,
@@ -296,6 +299,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               DateFormat(
                                 'HH:mm:ss',
                               ).format(currentTime.toDateTime()),
+                              style: Theme.of(context).textTheme.bodyLarge,
                             ),
                     ),
                     TableCell(
@@ -407,7 +411,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     btnCancelText: 'Từ chối',
                   ).show();
                 },
-                label: Text("Đặt lại tất cả mốc thời gian"),
+                label: Text(
+                  "Đặt lại tất cả mốc thời gian",
+                  style: TextStyle(
+                    fontSize: Theme.of(context).textTheme.bodyLarge!.fontSize,
+                  ),
+                ),
               ),
             ),
 

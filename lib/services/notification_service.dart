@@ -117,58 +117,6 @@ class NotificationService {
     return payload.scheduledTime;
   }
 
-  //TODO: DELETE DEMO
-  Future<void> showInstantNotification({
-    required String title,
-    required String body,
-    String? payload,
-  }) async {
-    // const int insistentFlag = 4;
-    final details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        'default_channel',
-        'Default',
-        channelDescription: 'Default notifications',
-        importance: Importance.max,
-        priority: Priority.high,
-        // additionalFlags: Int32List.fromList(<int>[insistentFlag]),
-      ),
-      iOS: DarwinNotificationDetails(),
-    );
-
-    await _flutterLocalNotificationsPlugin.show(
-      0,
-      title,
-      body,
-      details,
-      payload: payload,
-    );
-  }
-
-  //TODO: DELETE DEMO
-  Future<void> scheduleNotification({
-    required String title,
-    required String body,
-    required Duration delay,
-    String? payload,
-  }) async {
-    await _flutterLocalNotificationsPlugin.zonedSchedule(
-      0,
-      'scheduled title',
-      'scheduled body',
-      tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5)),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'your channel id',
-          'your channel name',
-          channelDescription: 'your channel description',
-        ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      payload: payload,
-    );
-  }
-
   Future<void> scheduleDailyNotification(
     TimeOfDayValues timeOfDay,
     DateTime scheduleTime,

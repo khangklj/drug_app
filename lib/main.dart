@@ -55,6 +55,12 @@ Future<void> main() async {
   final notifcationManager = NotificationManager();
   await notifcationManager.initSettings();
 
+  final drugManager = DrugManager();
+  await drugManager.fetchDrugsMetadata();
+
+  final drugFavoriteManager = DrugFavoriteManager();
+  await drugFavoriteManager.fetchFavoriteDrugs();
+
   final details = await notificationService.notifcationAppLaunchDetails;
   late final TimeOfDayValues? timeOfDayFromNotification;
   if (details != null && details.didNotificationLaunchApp) {
@@ -69,9 +75,9 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider.value(value: settingsManager),
         ChangeNotifierProvider.value(value: drugPrescriptionManager),
-        ChangeNotifierProvider(create: (_) => DrugManager()),
+        ChangeNotifierProvider.value(value: drugManager),
         ChangeNotifierProvider(create: (_) => SearchHistoryManager()),
-        ChangeNotifierProvider(create: (_) => DrugFavoriteManager()),
+        ChangeNotifierProvider.value(value: drugFavoriteManager),
         ChangeNotifierProxyProvider<
           DrugPrescriptionManager,
           NotificationManager

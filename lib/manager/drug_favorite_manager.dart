@@ -1,16 +1,16 @@
-import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/models/drug.dart';
+import 'package:drug_app/services/drug_service.dart';
 import 'package:drug_app/services/favorite_service.dart';
 import 'package:flutter/material.dart';
 
 class DrugFavoriteManager with ChangeNotifier {
   late final FavoriteService _favoriteService;
-  late final DrugManager _drugManager;
+  late final DrugService _drugService;
   List<Drug> _drugs = [];
 
   DrugFavoriteManager() {
     _favoriteService = FavoriteService();
-    _drugManager = DrugManager();
+    _drugService = DrugService();
   }
 
   List<Drug> get drugs => _drugs;
@@ -18,7 +18,8 @@ class DrugFavoriteManager with ChangeNotifier {
   Future<void> fetchFavoriteDrugs() async {
     if (drugs.isNotEmpty) return;
     List<String> drugIds = await _favoriteService.fetchFavoriteDrugs();
-    _drugs = _drugManager.searchDrugsMetadataByIds(drugIds);
+    final filter = drugIds.map((id) => 'id="$id"').join(' || ');
+    _drugs = await _drugService.fetchDrugMetadata(filter: filter);
     notifyListeners();
   }
 

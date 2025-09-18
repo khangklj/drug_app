@@ -6,10 +6,15 @@ import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class DrugFavoriteScreen extends StatelessWidget {
+class DrugFavoriteScreen extends StatefulWidget {
   const DrugFavoriteScreen({super.key});
   static const routeName = '/favorite_drugs';
 
+  @override
+  State<DrugFavoriteScreen> createState() => _DrugFavoriteScreenState();
+}
+
+class _DrugFavoriteScreenState extends State<DrugFavoriteScreen> {
   @override
   Widget build(BuildContext context) {
     final drugFavoriteManager = context.read<DrugFavoriteManager>();

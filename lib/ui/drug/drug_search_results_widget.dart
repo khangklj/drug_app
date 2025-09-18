@@ -55,6 +55,7 @@ class DrugSearchResultsWidget extends StatelessWidget {
               style: Theme.of(
                 context,
               ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
             ),
           ],
           const SizedBox(height: 8),

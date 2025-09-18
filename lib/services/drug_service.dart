@@ -108,13 +108,13 @@ class DrugService {
     }
   }
 
-  Future<List<Drug>> fetchDrugMetadata() async {
+  Future<List<Drug>> fetchDrugMetadata({String filter = ""}) async {
     final List<Drug> drugsMetadata = [];
     try {
       final pb = await getPocketBaseInstance();
       final recordList = await pb
           .collection('drug')
-          .getFullList(expand: 'aliases');
+          .getFullList(expand: 'aliases', filter: filter);
       for (final record in recordList) {
         final List<DrugAlias> aliasList = _parseDrugAliases(record);
         final drug = Drug.fromJson(

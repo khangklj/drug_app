@@ -236,7 +236,10 @@ class _MediAppHomepageScreenState extends State<MediAppHomepageScreen> {
                       Text(
                         "MediApp",
                         style: Theme.of(context).textTheme.displaySmall!
-                            .copyWith(fontWeight: FontWeight.bold),
+                            .copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                       ),
                       Image.asset(
                         "assets/icons/app_icon.png",
@@ -248,11 +251,15 @@ class _MediAppHomepageScreenState extends State<MediAppHomepageScreen> {
                   const SizedBox(height: 10),
                   Text(
                     "ỨNG DỤNG THUỐC TIỆN ÍCH",
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge!.copyWith(color: Colors.white),
                   ),
                   Text(
                     "Phiên bản 1.0",
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium!.copyWith(color: Colors.white),
                   ),
                 ],
               ),

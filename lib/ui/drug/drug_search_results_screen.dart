@@ -12,7 +12,7 @@ class DrugSearchResultsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: true,
-        title: const Text("MediApp"),
+        title: const Text("Tìm kiếm"),
       ),
       body: DrugSearchResultsWidget(drugs: drugs),
     );
