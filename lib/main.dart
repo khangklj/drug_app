@@ -113,11 +113,13 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
-      home: startScreen,
+      initialRoute: MediAppHomepageScreen.routeName,
       onGenerateRoute: (settings) {
         if (settings.name == MediAppHomepageScreen.routeName) {
           return MaterialPageRoute(
-            builder: (_) => SafeArea(child: const MediAppHomepageScreen()),
+            builder: (_) =>
+                SafeArea(child: StartupWrapper(startScreen: startScreen)),
+            settings: settings,
           );
         }
 
@@ -126,6 +128,7 @@ class MyApp extends StatelessWidget {
           return MaterialPageRoute(
             builder: (_) =>
                 SafeArea(child: DrugSearchResultsScreen(drugs: drugs)),
+            settings: settings,
           );
         }
 
@@ -133,12 +136,14 @@ class MyApp extends StatelessWidget {
           final drugId = settings.arguments as String;
           return MaterialPageRoute(
             builder: (_) => SafeArea(child: DrugDetailsScreen(drugId: drugId)),
+            settings: settings,
           );
         }
 
         if (settings.name == DrugPrescriptionScreen.routeName) {
           return MaterialPageRoute(
             builder: (_) => SafeArea(child: const DrugPrescriptionScreen()),
+            settings: settings,
           );
         }
 
@@ -147,12 +152,14 @@ class MyApp extends StatelessWidget {
           return MaterialPageRoute(
             builder: (_) =>
                 SafeArea(child: DrugPrescriptionEditScreen(drugPrescription)),
+            settings: settings,
           );
         }
 
         if (settings.name == DrugFavoriteScreen.routeName) {
           return MaterialPageRoute(
             builder: (_) => SafeArea(child: DrugFavoriteScreen()),
+            settings: settings,
           );
         }
 
@@ -162,17 +169,46 @@ class MyApp extends StatelessWidget {
             builder: (_) => SafeArea(
               child: DrugPrescriptionPayloadScreen(timeOfDay: timeOfDay),
             ),
+            settings: settings,
           );
         }
 
         if (settings.name == SettingsScreen.routeName) {
           return MaterialPageRoute(
             builder: (_) => SafeArea(child: SettingsScreen()),
+            settings: settings,
           );
         }
 
         return null;
       },
     );
+  }
+}
+
+class StartupWrapper extends StatefulWidget {
+  final Widget startScreen;
+  const StartupWrapper({super.key, required this.startScreen});
+
+  @override
+  State<StartupWrapper> createState() => _StartupWrapperState();
+}
+
+class _StartupWrapperState extends State<StartupWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.startScreen is! MediAppHomepageScreen) {
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => widget.startScreen));
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const MediAppHomepageScreen();
   }
 }

@@ -20,10 +20,9 @@ class _DrugFavoriteScreenState extends State<DrugFavoriteScreen> {
     final drugFavoriteManager = context.read<DrugFavoriteManager>();
     final drugs = context.watch<DrugFavoriteManager>().drugs;
     final searchHistoryManager = context.read<SearchHistoryManager>();
-    return Scaffold(
-      appBar: AppBar(title: const Text("Danh sách yêu thích"), elevation: 4.0),
-      drawer: MediAppDrawer(),
-      body: ListView.separated(
+
+    Widget _buildFavoriteList() {
+      return ListView.separated(
         separatorBuilder: (context, index) => const Divider(),
         itemCount: drugs.length,
         itemBuilder: (context, index) {
@@ -110,7 +109,21 @@ class _DrugFavoriteScreenState extends State<DrugFavoriteScreen> {
             ),
           );
         },
-      ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: const Text("Danh sách yêu thích"), elevation: 4.0),
+      drawer: MediAppDrawer(),
+      body: drugs.isEmpty
+          ? Center(
+              child: Text(
+                "Không có thuốc\ntrong danh sách yêu thích",
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            )
+          : _buildFavoriteList(),
     );
   }
 }

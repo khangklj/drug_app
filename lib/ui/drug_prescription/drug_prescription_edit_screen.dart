@@ -83,7 +83,7 @@ class DrugPrescriptionEditScreen extends StatefulWidget {
             customName: null,
             deviceId: null,
             items: [],
-            isActive: false,
+            isActive: true,
           );
 
   late final DrugPrescription drugPrescription;

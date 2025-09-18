@@ -18,6 +18,7 @@ class DrugFavoriteManager with ChangeNotifier {
   Future<void> fetchFavoriteDrugs() async {
     if (drugs.isNotEmpty) return;
     List<String> drugIds = await _favoriteService.fetchFavoriteDrugs();
+    if (drugIds.isEmpty) return;
     final filter = drugIds.map((id) => 'id="$id"').join(' || ');
     _drugs = await _drugService.fetchDrugMetadata(filter: filter);
     notifyListeners();

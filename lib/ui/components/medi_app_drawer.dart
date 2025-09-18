@@ -40,9 +40,15 @@ class MediAppDrawer extends StatelessWidget {
             ),
 
             onTap: () {
-              Navigator.of(
-                context,
-              ).popAndPushNamed(MediAppHomepageScreen.routeName);
+              Navigator.of(context).pop();
+              if (ModalRoute.of(context)?.settings.name ==
+                  MediAppHomepageScreen.routeName) {
+                return;
+              }
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                MediAppHomepageScreen.routeName,
+                (route) => route.isFirst,
+              );
             },
           ),
           ListTile(
@@ -52,9 +58,15 @@ class MediAppDrawer extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             onTap: () {
-              Navigator.of(
-                context,
-              ).popAndPushNamed(DrugPrescriptionScreen.routeName);
+              Navigator.of(context).pop();
+              if (ModalRoute.of(context)?.settings.name ==
+                  DrugPrescriptionScreen.routeName) {
+                return;
+              }
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                DrugPrescriptionScreen.routeName,
+                (route) => route.isFirst,
+              );
             },
           ),
           ListTile(
@@ -64,9 +76,15 @@ class MediAppDrawer extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             onTap: () {
-              Navigator.of(
-                context,
-              ).popAndPushNamed(DrugFavoriteScreen.routeName);
+              Navigator.of(context).pop();
+              if (ModalRoute.of(context)?.settings.name ==
+                  DrugFavoriteScreen.routeName) {
+                return;
+              }
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                DrugFavoriteScreen.routeName,
+                (route) => route.isFirst,
+              );
             },
           ),
           ListTile(
@@ -76,7 +94,15 @@ class MediAppDrawer extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             onTap: () {
-              Navigator.of(context).popAndPushNamed(SettingsScreen.routeName);
+              Navigator.of(context).pop();
+              if (ModalRoute.of(context)?.settings.name ==
+                  SettingsScreen.routeName) {
+                return;
+              }
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                SettingsScreen.routeName,
+                (route) => route.isFirst,
+              );
             },
           ),
         ],
