@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:drug_app/manager/drug_favorite_manager.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
+import 'package:drug_app/manager/internet_manager.dart';
 import 'package:drug_app/manager/notification_manager.dart';
 import 'package:drug_app/manager/search_history_manager.dart';
 import 'package:drug_app/manager/settings_manager.dart';
@@ -50,15 +51,20 @@ Future<void> main() async {
   await settingsManager.initSettings();
 
   final drugPrescriptionManager = DrugPrescriptionManager();
-  await drugPrescriptionManager.fetchDrugPrescriptions();
-
   final notifcationManager = NotificationManager();
-  await notifcationManager.initSettings();
-
   final drugManager = DrugManager();
-  await drugManager.fetchDrugsMetadata();
-
   final drugFavoriteManager = DrugFavoriteManager();
+
+  await InternetManager.instance.init(globalNavigatorKey);
+  InternetManager.instance.register(
+    drugPrescriptionManager.fetchDrugPrescriptions,
+  );
+  InternetManager.instance.register(drugManager.fetchDrugsMetadata);
+  InternetManager.instance.register(drugFavoriteManager.fetchFavoriteDrugs);
+
+  await drugPrescriptionManager.fetchDrugPrescriptions();
+  await notifcationManager.initSettings();
+  await drugManager.fetchDrugsMetadata();
   await drugFavoriteManager.fetchFavoriteDrugs();
 
   final details = await notificationService.notifcationAppLaunchDetails;

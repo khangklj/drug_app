@@ -21,7 +21,7 @@ class _DrugFavoriteScreenState extends State<DrugFavoriteScreen> {
     final drugs = context.watch<DrugFavoriteManager>().drugs;
     final searchHistoryManager = context.read<SearchHistoryManager>();
 
-    Widget _buildFavoriteList() {
+    Widget buildFavoriteList() {
       return ListView.separated(
         separatorBuilder: (context, index) => const Divider(),
         itemCount: drugs.length,
@@ -123,7 +123,7 @@ class _DrugFavoriteScreenState extends State<DrugFavoriteScreen> {
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             )
-          : _buildFavoriteList(),
+          : buildFavoriteList(),
     );
   }
 }

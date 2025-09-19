@@ -1,4 +1,5 @@
 import 'package:drug_app/manager/drug_manager.dart';
+import 'package:drug_app/manager/internet_manager.dart';
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/models/drug_data.dart';
 import 'package:drug_app/ui/components/add_to_favorite_button.dart';
@@ -15,16 +16,17 @@ class DrugDetailsScreen extends StatefulWidget {
 }
 
 class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
-  late Future<Drug?> _fetchDrugs;
+  late final ValueNotifier<Future<Drug?>> _fetchDrugsNotifier;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isSearching = false;
   @override
   void initState() {
     super.initState();
-    _fetchDrugs = context.read<DrugManager>().fetchDrugDetails(
-      id: widget.drugId,
+    _fetchDrugsNotifier = ValueNotifier(
+      context.read<DrugManager>().fetchDrugDetails(id: widget.drugId),
     );
+    InternetManager.instance.register(_retryFetch);
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -32,7 +34,15 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    InternetManager.instance.unregister(_retryFetch);
+    _fetchDrugsNotifier.dispose();
     super.dispose();
+  }
+
+  Future<void> _retryFetch() async {
+    _fetchDrugsNotifier.value = context.read<DrugManager>().fetchDrugDetails(
+      id: widget.drugId,
+    );
   }
 
   void _onSearchChanged() {
@@ -164,168 +174,167 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     ValueNotifier<int> index = ValueNotifier<int>(0);
-    return FutureBuilder(
-      future: _fetchDrugs,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(
-            body: const Center(child: CircularProgressIndicator()),
-          );
-        } else if (snapshot.hasError) {
-          showDialog(
-            context: context,
-            builder: (context) {
+    return ValueListenableBuilder<Future<Drug?>>(
+      valueListenable: _fetchDrugsNotifier,
+      builder: (context, future, _) {
+        return FutureBuilder(
+          future: future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Scaffold(
+                body: const Center(child: CircularProgressIndicator()),
+              );
+            } else if (snapshot.hasError) {
               return CustomAlertDialog();
-            },
-          );
-          return Container();
-        }
-        final Drug? drug = snapshot.data;
-        if (drug == null || drug.data == null) {
-          return CustomAlertDialog();
-        }
+            }
+            final Drug? drug = snapshot.data;
+            if (drug == null || drug.data == null) {
+              return CustomAlertDialog();
+            }
 
-        final List<Widget> tabBarContents = drug.data!.map((drugData) {
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  DrugDisplayImage(drug: drug, drugData: drugData),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Text(
-                      drugData.displayName,
-                      style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  if (drug.aliases != null && drug.aliases!.isNotEmpty)
-                    Center(
-                      child: Text(
-                        'Tên gọi khác: ${drug.aliases!.map((alias) => alias.name).join(', ')}',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
-                  const SizedBox(height: 20),
-                  _buildDrugExpansionTile(
-                    title: 'Chỉ định',
-                    content: drugData.indications,
-                  ),
-                  _buildDrugExpansionTile(
-                    title: 'Chống chỉ định',
-                    content: drugData.contraindications,
-                  ),
-                  _buildDrugExpansionTile(
-                    title: 'Cách dùng và liều dùng',
-                    content: drugData.dosage,
-                  ),
-                  _buildDrugExpansionTile(
-                    title: 'Tác dụng phụ',
-                    content: drugData.adverseEffects,
-                  ),
-                  _buildDrugExpansionTile(
-                    title: 'Bảo quản',
-                    content: drugData.preservation,
-                  ),
-                  _buildDrugExpansionTile(
-                    title: 'Lưu ý chung',
-                    content: drugData.generalWarnings,
-                  ),
-                  _buildDrugExpansionTile(
-                    title: 'Thời kì mang thai',
-                    content: drugData.pregnacyWarnings,
-                  ),
-                  _buildDrugExpansionTile(
-                    title: 'Thời kì cho con bú',
-                    content: drugData.breastfeedingWarnings,
-                  ),
-                  _buildDrugExpansionTile(
-                    title: 'Khả năng vận hành máy móc và lái xe',
-                    content: drugData.drivingWarnings,
-                  ),
-                  _buildDrugExpansionTile(
-                    title: 'Dược lực học',
-                    content: drugData.pharmacodynamics,
-                  ),
-                  _buildDrugExpansionTile(
-                    title: 'Dược động học',
-                    content: drugData.pharmacokinetics,
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList();
-
-        return DefaultTabController(
-          length: drug.data!.length,
-          child: Scaffold(
-            appBar: AppBar(
-              automaticallyImplyLeading: true,
-              elevation: 4.0,
-              title: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: !_isSearching
-                    ? Text(
-                        drug.name,
-                        style: Theme.of(context).textTheme.titleLarge,
-                        overflow: TextOverflow.ellipsis,
-                      )
-                    : TextField(
-                        controller: _searchController,
-                        style: Theme.of(context).textTheme.titleMedium,
-                        decoration: InputDecoration(
-                          hintText: 'Gõ từ khóa để tìm kiếm ...',
-                          border: InputBorder.none,
-                          hintStyle: Theme.of(
-                            context,
-                          ).textTheme.titleMedium!.copyWith(color: Colors.grey),
+            final List<Widget> tabBarContents = drug.data!.map((drugData) {
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DrugDisplayImage(drug: drug, drugData: drugData),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: Text(
+                          drugData.displayName,
+                          style: Theme.of(context).textTheme.titleLarge!
+                              .copyWith(fontWeight: FontWeight.bold),
                         ),
-                        autofocus: true,
                       ),
-              ),
-              bottom: drug.data!.length > 1
-                  ? TabBar(
-                      tabs: List.generate(
-                        drug.data!.length,
-                        (index) => Tab(
+                      if (drug.aliases != null && drug.aliases!.isNotEmpty)
+                        Center(
                           child: Text(
-                            drug.data![index].displayName,
+                            'Tên gọi khác: ${drug.aliases!.map((alias) => alias.name).join(', ')}',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ),
+                      const SizedBox(height: 20),
+                      _buildDrugExpansionTile(
+                        title: 'Chỉ định',
+                        content: drugData.indications,
                       ),
-                      onTap: (i) {
+                      _buildDrugExpansionTile(
+                        title: 'Chống chỉ định',
+                        content: drugData.contraindications,
+                      ),
+                      _buildDrugExpansionTile(
+                        title: 'Cách dùng và liều dùng',
+                        content: drugData.dosage,
+                      ),
+                      _buildDrugExpansionTile(
+                        title: 'Tác dụng phụ',
+                        content: drugData.adverseEffects,
+                      ),
+                      _buildDrugExpansionTile(
+                        title: 'Bảo quản',
+                        content: drugData.preservation,
+                      ),
+                      _buildDrugExpansionTile(
+                        title: 'Lưu ý chung',
+                        content: drugData.generalWarnings,
+                      ),
+                      _buildDrugExpansionTile(
+                        title: 'Thời kì mang thai',
+                        content: drugData.pregnacyWarnings,
+                      ),
+                      _buildDrugExpansionTile(
+                        title: 'Thời kì cho con bú',
+                        content: drugData.breastfeedingWarnings,
+                      ),
+                      _buildDrugExpansionTile(
+                        title: 'Khả năng vận hành máy móc và lái xe',
+                        content: drugData.drivingWarnings,
+                      ),
+                      _buildDrugExpansionTile(
+                        title: 'Dược lực học',
+                        content: drugData.pharmacodynamics,
+                      ),
+                      _buildDrugExpansionTile(
+                        title: 'Dược động học',
+                        content: drugData.pharmacokinetics,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList();
+
+            return DefaultTabController(
+              length: drug.data!.length,
+              child: Scaffold(
+                appBar: AppBar(
+                  automaticallyImplyLeading: true,
+                  elevation: 4.0,
+                  title: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: !_isSearching
+                        ? Text(
+                            drug.name,
+                            style: Theme.of(context).textTheme.titleLarge,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : TextField(
+                            controller: _searchController,
+                            style: Theme.of(context).textTheme.titleMedium,
+                            decoration: InputDecoration(
+                              hintText: 'Gõ từ khóa để tìm kiếm ...',
+                              border: InputBorder.none,
+                              hintStyle: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium!
+                                  .copyWith(color: Colors.grey),
+                            ),
+                            autofocus: true,
+                          ),
+                  ),
+                  bottom: drug.data!.length > 1
+                      ? TabBar(
+                          tabs: List.generate(
+                            drug.data!.length,
+                            (index) => Tab(
+                              child: Text(
+                                drug.data![index].displayName,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ),
+                          ),
+                          onTap: (i) {
+                            setState(() {
+                              index.value = i;
+                            });
+                          },
+                        )
+                      : null,
+
+                  actions: [
+                    IconButton(
+                      icon: _isSearching
+                          ? const Icon(Icons.close)
+                          : const Icon(Icons.search),
+                      onPressed: () {
                         setState(() {
-                          index.value = i;
+                          _isSearching = !_isSearching;
+                          if (!_isSearching) {
+                            _searchController.clear();
+                            _searchQuery = '';
+                          }
                         });
                       },
-                    )
-                  : null,
-
-              actions: [
-                IconButton(
-                  icon: _isSearching
-                      ? const Icon(Icons.close)
-                      : const Icon(Icons.search),
-                  onPressed: () {
-                    setState(() {
-                      _isSearching = !_isSearching;
-                      if (!_isSearching) {
-                        _searchController.clear();
-                        _searchQuery = '';
-                      }
-                    });
-                  },
+                    ),
+                    AddToFavoriteButton(drug: drug),
+                  ],
                 ),
-                AddToFavoriteButton(drug: drug),
-              ],
-            ),
-            body: TabBarView(children: tabBarContents),
-          ),
+                body: TabBarView(children: tabBarContents),
+              ),
+            );
+          },
         );
       },
     );
@@ -366,22 +375,21 @@ class DrugDisplayImage extends StatelessWidget {
   }
 }
 
+//TODO: Implement proper error dialog for all screen
 class CustomAlertDialog extends StatelessWidget {
   const CustomAlertDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Error'),
-      content: const Text(
-        'Failed to fetch drug details. Please try again later.',
-      ),
+      title: const Text('Lỗi'),
+      content: const Text('Lấy thông tin thuốc thất bại!'),
       actions: [
         TextButton(
           onPressed: () {
             Navigator.of(context).pop();
           },
-          child: const Text('Back to home'),
+          child: const Text('Quay lại'),
         ),
       ],
     );

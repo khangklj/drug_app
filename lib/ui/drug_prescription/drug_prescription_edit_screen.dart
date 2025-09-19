@@ -106,7 +106,7 @@ class _DrugPrescriptionEditScreenState
 
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTopButton = false;
-  bool _isSortAscending = true;
+  bool _isSortAscending = false;
 
   @override
   void initState() {
