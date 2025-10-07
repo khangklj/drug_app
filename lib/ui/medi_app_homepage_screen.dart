@@ -14,6 +14,7 @@ import 'package:drug_app/ui/drug/drug_favorite_screen.dart';
 import 'package:drug_app/ui/drug/drug_search_delegate.dart';
 import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_edit_screen.dart';
+import 'package:drug_app/ui/drug_prescription/drug_prescription_payload_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_screen.dart';
 import 'package:drug_app/ui/settings_screen.dart';
 import 'package:drug_app/utils.dart';
@@ -264,53 +265,11 @@ class _MediAppHomepageScreenState extends State<MediAppHomepageScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 4),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Các tiện ích quét nhanh",
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      MediAppIconEntry(
-                        icon: const Icon(Icons.format_shapes_sharp),
-                        text: Text(
-                          "Quét\nnhãn thuốc",
-                          style: Theme.of(context).textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                        onTap: _showScanningDrugLabelOptions,
-                      ),
-                      MediAppIconEntry(
-                        icon: const Icon(Icons.document_scanner_outlined),
-                        text: Text(
-                          "Quét\ntoa thuốc",
-                          style: Theme.of(context).textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                        onTap: _showScanningDrugPrescriptionOptions,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Divider(thickness: 1.2),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Các tiện ích khác",
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
                   TextField(
                     decoration: InputDecoration(
                       hintText: "Gõ từ khóa để tìm kiếm thuốc...",
@@ -332,50 +291,210 @@ class _MediAppHomepageScreenState extends State<MediAppHomepageScreen> {
                       );
                     },
                   ),
-                  const SizedBox(height: 18),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      MediAppIconEntry(
-                        icon: const Icon(Icons.list_alt_outlined),
-                        text: Text(
-                          "Quản lý\ntoa thuốc",
-                          style: Theme.of(context).textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                        onTap: () {
-                          Navigator.of(
-                            context,
-                          ).pushNamed(DrugPrescriptionScreen.routeName);
-                        },
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              "Các tiện ích quét nhanh",
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              MediAppIconEntry(
+                                icon: const Icon(Icons.format_shapes_sharp),
+                                iconBGColor: Colors.blue.shade500,
+                                text: Text(
+                                  "Quét\nnhãn thuốc",
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                onTap: _showScanningDrugLabelOptions,
+                              ),
+                              MediAppIconEntry(
+                                icon: const Icon(
+                                  Icons.document_scanner_outlined,
+                                ),
+                                iconBGColor: Colors.blue.shade500,
+                                text: Text(
+                                  "Quét\ntoa thuốc",
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                onTap: _showScanningDrugPrescriptionOptions,
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      MediAppIconEntry(
-                        icon: const Icon(Icons.star_border_outlined),
-                        text: Text(
-                          "Danh sách\nyêu thích",
-                          style: Theme.of(context).textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                        onTap: () {
-                          Navigator.of(
-                            context,
-                          ).pushNamed(DrugFavoriteScreen.routeName);
-                        },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              "Lịch uống thuốc",
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              MediAppIconEntry(
+                                icon: Icon(
+                                  Icons.wb_twilight_outlined,
+                                  color: Colors.orange,
+                                ),
+                                iconBGColor: Colors.yellow,
+                                text: Text(
+                                  "Sáng",
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                onTap: () {
+                                  Navigator.of(context).pushNamed(
+                                    DrugPrescriptionPayloadScreen.routeName,
+                                    arguments: TimeOfDayValues.morning,
+                                  );
+                                },
+                              ),
+                              MediAppIconEntry(
+                                icon: Icon(Icons.sunny, color: Colors.green),
+                                iconBGColor: Colors.greenAccent,
+                                text: Text(
+                                  "Trưa",
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                onTap: () {
+                                  Navigator.of(context).pushNamed(
+                                    DrugPrescriptionPayloadScreen.routeName,
+                                    arguments: TimeOfDayValues.noon,
+                                  );
+                                },
+                              ),
+                              MediAppIconEntry(
+                                icon: Icon(
+                                  Icons.wb_twighlight,
+                                  color: Colors.yellow,
+                                ),
+                                iconBGColor: Colors.deepOrangeAccent.shade200,
+                                text: Text(
+                                  "Chiều",
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                onTap: () {
+                                  Navigator.of(context).pushNamed(
+                                    DrugPrescriptionPayloadScreen.routeName,
+                                    arguments: TimeOfDayValues.afternoon,
+                                  );
+                                },
+                              ),
+                              MediAppIconEntry(
+                                icon: Icon(
+                                  Icons.nights_stay,
+                                  color: Colors.blue.shade200,
+                                ),
+                                iconBGColor: Colors.indigo,
+                                text: Text(
+                                  "Tối",
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                onTap: () {
+                                  Navigator.of(context).pushNamed(
+                                    DrugPrescriptionPayloadScreen.routeName,
+                                    arguments: TimeOfDayValues.evening,
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      MediAppIconEntry(
-                        icon: const Icon(Icons.settings_outlined),
-                        text: Text(
-                          "Cài đặt\n",
-                          style: Theme.of(context).textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                        onTap: () {
-                          Navigator.of(
-                            context,
-                          ).pushNamed(SettingsScreen.routeName);
-                        },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              "Các tiện ích khác",
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              MediAppIconEntry(
+                                icon: const Icon(Icons.list_alt_outlined),
+                                iconBGColor: Colors.blue.shade500,
+                                text: Text(
+                                  "Quản lý\ntoa thuốc",
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                onTap: () {
+                                  Navigator.of(
+                                    context,
+                                  ).pushNamed(DrugPrescriptionScreen.routeName);
+                                },
+                              ),
+                              MediAppIconEntry(
+                                icon: const Icon(Icons.star_border_outlined),
+                                iconBGColor: Colors.blue.shade500,
+                                text: Text(
+                                  "Danh sách\nyêu thích",
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                onTap: () {
+                                  Navigator.of(
+                                    context,
+                                  ).pushNamed(DrugFavoriteScreen.routeName);
+                                },
+                              ),
+                              MediAppIconEntry(
+                                icon: const Icon(Icons.settings_outlined),
+                                iconBGColor: Colors.blue.shade500,
+                                text: Text(
+                                  "Cài đặt\n",
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                onTap: () {
+                                  Navigator.of(
+                                    context,
+                                  ).pushNamed(SettingsScreen.routeName);
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
@@ -393,11 +512,13 @@ class MediAppIconEntry extends StatelessWidget {
     required this.text,
     required this.icon,
     required this.onTap,
+    this.iconBGColor,
   });
 
   final Text text;
   final Icon icon;
   final void Function() onTap;
+  final Color? iconBGColor;
 
   @override
   Widget build(BuildContext context) {
@@ -416,9 +537,7 @@ class MediAppIconEntry extends StatelessWidget {
               children: [
                 ClipOval(
                   child: Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.secondaryContainer,
-                    ),
+                    decoration: BoxDecoration(color: iconBGColor),
                     child: Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: icon,

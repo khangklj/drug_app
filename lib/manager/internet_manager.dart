@@ -54,7 +54,6 @@ class InternetManager {
 
   void _retryCallbacks() {
     for (var cb in List.from(_callbacks)) {
-      print(_callbacks);
       cb();
     }
   }

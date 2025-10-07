@@ -70,14 +70,15 @@ class DrugPrescriptionPayloadScreen extends StatelessWidget {
                   if (isEmptyAll) ...[
                     Text(
                       "Không tìm thấy danh sách thuốc",
-                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         fontStyle: FontStyle.italic,
                       ),
                     ),
                   ] else ...[
                     ListView.separated(
                       shrinkWrap: true,
-                      separatorBuilder: (context, index) => const Divider(),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 10),
                       itemCount: dpList.length,
                       itemBuilder: (context, index) {
                         return DrugPrescriptionCheckBoxWidget(
@@ -144,6 +145,8 @@ class _DrugPrescriptionCheckBoxWidgetState
 
   @override
   Widget build(BuildContext context) {
+    if (widget.dpItems.isEmpty) return const SizedBox.shrink();
+
     return Column(
       children: [
         CheckboxListTile(
@@ -181,11 +184,11 @@ class _DrugPrescriptionCheckBoxWidgetState
                   onChanged: (value) {
                     toggleChild(index, value);
                   },
-                  selectedTileColor: Colors.blue.shade700,
+                  selectedTileColor: Colors.blue.shade800,
                   selected: dpItemsChecked[index],
                   fillColor: WidgetStateProperty.resolveWith<Color>((states) {
                     if (states.contains(WidgetState.selected)) {
-                      return Colors.amber.shade700;
+                      return Colors.green;
                     }
                     return Colors.transparent;
                   }),

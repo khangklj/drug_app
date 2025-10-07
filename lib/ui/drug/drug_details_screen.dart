@@ -375,7 +375,6 @@ class DrugDisplayImage extends StatelessWidget {
   }
 }
 
-//TODO: Implement proper error dialog for all screen
 class CustomAlertDialog extends StatelessWidget {
   const CustomAlertDialog({super.key});
 
