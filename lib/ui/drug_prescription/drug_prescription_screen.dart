@@ -67,7 +67,7 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
           id: null,
           customName: null,
           deviceId: null,
-          isActive: false,
+          isActive: true,
           items: dpItems,
         );
         if (mounted) {

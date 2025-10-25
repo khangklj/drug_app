@@ -225,7 +225,7 @@ class _DrugPrescriptionEditScreenState
 
       for (var time in TimeOfDayValues.values) {
         final quantity = double.tryParse(_controllers[card.id]![time]!.text);
-        if (quantity == 0.0) continue;
+        if (quantity == null || quantity == 0.0) continue;
         dpItems.add(
           DrugPrescriptionItem(
             id: card.items
@@ -244,7 +244,7 @@ class _DrugPrescriptionEditScreenState
       return null;
     }
 
-    final formatter = DateFormat('yyyyMMddHHmmss');
+    final formatter = DateFormat('mm:HH-dd/MM/yyyy');
     final generatedCustomName =
         'Toa thuốc ${formatter.format(DateTime.now().toLocal())}';
 
