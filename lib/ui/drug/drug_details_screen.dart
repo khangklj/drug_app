@@ -1,3 +1,4 @@
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/manager/internet_manager.dart';
 import 'package:drug_app/models/drug.dart';
@@ -184,12 +185,26 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
               return Scaffold(
                 body: const Center(child: CircularProgressIndicator()),
               );
-            } else if (snapshot.hasError) {
-              return CustomAlertDialog();
             }
             final Drug? drug = snapshot.data;
             if (drug == null || drug.data == null) {
-              return CustomAlertDialog();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                AwesomeDialog(
+                  context: context,
+                  dialogType: DialogType.error,
+                  animType: AnimType.scale,
+                  headerAnimationLoop: false,
+                  title: "Lỗi kết nối",
+                  desc: "Lấy thông tin thuốc thất bại.",
+                  btnOkText: "OK",
+                  btnOkOnPress: () {},
+                  onDismissCallback: (type) {
+                    Navigator.of(context).pop();
+                  },
+                  btnOkColor: Theme.of(context).colorScheme.primaryContainer,
+                ).show();
+              });
+              return const Scaffold(body: SizedBox.shrink());
             }
 
             final List<Widget> tabBarContents = drug.data!.map((drugData) {
@@ -371,26 +386,6 @@ class DrugDisplayImage extends StatelessWidget {
           drugData.getImage(),
         ),
       ),
-    );
-  }
-}
-
-class CustomAlertDialog extends StatelessWidget {
-  const CustomAlertDialog({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Lỗi'),
-      content: const Text('Lấy thông tin thuốc thất bại!'),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: const Text('Quay lại'),
-        ),
-      ],
     );
   }
 }

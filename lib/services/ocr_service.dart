@@ -44,7 +44,7 @@ class OcrService {
     }
   }
 
-  Future<List<DrugPrescriptionItem>> postDrugPrescriptionImage(
+  Future<List<DrugPrescriptionItem>?> postDrugPrescriptionImage(
     File file,
   ) async {
     final endpoint = '$_apiUrl/drug_prescription';
@@ -76,7 +76,7 @@ class OcrService {
       }
     } catch (error) {
       _logger.e(error);
-      return [];
+      return null;
     }
   }
 }

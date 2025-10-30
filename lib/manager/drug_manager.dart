@@ -5,12 +5,22 @@ import 'package:flutter/material.dart';
 class DrugManager with ChangeNotifier {
   late final DrugService _drugService;
   List<Drug> _drugs = [];
+  bool _hasFetchDrugMetadata = false;
+  bool _hasError = false;
+  String _errorMessage = '';
+
+  List<Drug> get drugs => [..._drugs];
+  bool get hasError => _hasError;
+  String get errorMessage => _errorMessage;
 
   DrugManager() {
     _drugService = DrugService();
   }
 
-  List<Drug> get drugs => [..._drugs];
+  void clearError() {
+    _hasError = false;
+    _errorMessage = '';
+  }
 
   Future<void> fetchDrugs({
     int page = 1,
@@ -27,11 +37,19 @@ class DrugManager with ChangeNotifier {
 
   Future<Drug?> fetchDrugDetails({required String id}) async {
     final drug = await _drugService.fetchDrugDetails(id);
+    if (drug == null) {
+      _hasError = true;
+      _errorMessage = 'Lấy thông tin thuốc thất bại';
+      return null;
+    }
     return drug;
   }
 
   Future<void> fetchDrugsMetadata() async {
+    if (_hasFetchDrugMetadata) return;
     _drugs = await _drugService.fetchDrugMetadata();
+    if (_drugs.isEmpty) return;
+    _hasFetchDrugMetadata = true;
     notifyListeners();
   }
 

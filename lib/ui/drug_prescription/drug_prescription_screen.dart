@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:collection/collection.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/models/drug_prescription.dart';
@@ -61,8 +62,28 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
             return const MediAppLoadingDialog();
           },
         );
-        List<DrugPrescriptionItem> dpItems = await OcrService()
+        List<DrugPrescriptionItem>? dpItems = await OcrService()
             .postDrugPrescriptionImage(file);
+        if (dpItems == null) {
+          if (mounted) {
+            Navigator.of(context).pop();
+            AwesomeDialog(
+              context: context,
+              dialogType: DialogType.error,
+              animType: AnimType.scale,
+              headerAnimationLoop: false,
+              title: "Lỗi kết nối",
+              desc: "Vui lòng thử lại.",
+              btnOkText: "OK",
+              btnOkOnPress: () {},
+              btnOkColor: Theme.of(context).colorScheme.primaryContainer,
+              onDismissCallback: (type) {
+                return;
+              },
+            ).show();
+          }
+          return;
+        }
         DrugPrescription newDP = DrugPrescription(
           id: null,
           customName: null,

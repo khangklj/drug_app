@@ -244,7 +244,7 @@ class _DrugPrescriptionEditScreenState
       return null;
     }
 
-    final formatter = DateFormat('mm:HH-dd/MM/yyyy');
+    final formatter = DateFormat('HH:mm:ss-dd/MM/yyyy');
     final generatedCustomName =
         'Toa thuốc ${formatter.format(DateTime.now().toLocal())}';
 
@@ -287,78 +287,100 @@ class _DrugPrescriptionEditScreenState
             ? Text("Chỉnh sửa toa thuốc")
             : Text("Thêm toa thuốc"),
         actions: [
-          IconButton(
-            icon: Icon(Icons.save_outlined),
-            onPressed: () async {
-              if (_formKey.currentState!.validate()) {
-                final dp = _onSaveForm();
+          Consumer<DrugPrescriptionManager>(
+            builder: (context, drugDPManager, child) {
+              return IconButton(
+                icon: Icon(Icons.save_outlined),
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    final dp = _onSaveForm();
 
-                if (dp == null) {
-                  AwesomeDialog(
-                    context: context,
-                    dialogType: DialogType.error,
-                    animType: AnimType.scale,
-                    title: 'Lỗi khi lưu toa thuốc',
-                    desc: 'Vui lòng nhập thông tin toa thuốc.',
-                    btnOkOnPress: () {},
-                    btnOkIcon: Icons.check_circle,
-                    btnCancel: null,
-                    btnOkText: 'OK',
-                  ).show();
-                  return;
-                }
+                    if (dp == null) {
+                      AwesomeDialog(
+                        context: context,
+                        dialogType: DialogType.error,
+                        animType: AnimType.scale,
+                        title: 'Lỗi nhập liệu',
+                        desc: 'Vui lòng nhập thông tin toa thuốc.',
+                        btnOkOnPress: () {},
+                        btnOkIcon: Icons.check_circle,
+                        btnCancel: null,
+                        btnOkText: 'OK',
+                      ).show();
+                      return;
+                    }
 
-                showDialog(
-                  barrierDismissible: false,
-                  context: context,
-                  builder: (context) {
-                    return const MediAppLoadingDialog();
-                  },
-                );
+                    showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder: (context) {
+                        return const MediAppLoadingDialog();
+                      },
+                    );
 
-                if (widget.isEditState) {
-                  await context
-                      .read<DrugPrescriptionManager>()
-                      .updateDrugPrescription(dp);
-                } else {
-                  await context
-                      .read<DrugPrescriptionManager>()
-                      .addDrugPrescription(dp);
-                }
+                    if (widget.isEditState) {
+                      await drugDPManager.updateDrugPrescription(dp);
+                    } else {
+                      await drugDPManager.addDrugPrescription(dp);
+                    }
 
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                  AwesomeDialog(
-                    context: context,
-                    dialogType: DialogType.info,
-                    animType: AnimType.scale,
-                    title: 'Lưu toa thuốc thành công',
-                    btnOkOnPress: () {
+                    if (context.mounted) {
                       Navigator.of(context).pop();
-                    },
-                    onDismissCallback: (type) {
-                      if (type != DismissType.btnOk) {
-                        Navigator.of(context).pop();
+
+                      if (drugDPManager.hasError) {
+                        AwesomeDialog(
+                          context: context,
+                          dialogType: DialogType.error,
+                          animType: AnimType.scale,
+                          headerAnimationLoop: false,
+                          title: "Lỗi kết nối",
+                          desc: drugDPManager.errorMessage,
+                          btnOkText: "OK",
+                          btnOkOnPress: () {},
+                          btnOkColor: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer,
+                          onDismissCallback: (type) {
+                            return;
+                          },
+                        ).show();
+                        drugDPManager.clearError();
+                        return;
                       }
-                    },
-                    btnOkIcon: Icons.check_circle,
-                    btnCancel: null,
-                    btnOkText: 'OK',
-                  ).show();
-                }
-              } else {
-                AwesomeDialog(
-                  context: context,
-                  dialogType: DialogType.error,
-                  animType: AnimType.scale,
-                  title: 'Lỗi khi lưu toa thuốc',
-                  desc: 'Vui lòng nhập thông tin toa thuốc.',
-                  btnOkOnPress: () {},
-                  btnOkIcon: Icons.check_circle,
-                  btnCancel: null,
-                  btnOkText: 'OK',
-                ).show();
-              }
+
+                      AwesomeDialog(
+                        context: context,
+                        dialogType: DialogType.info,
+                        animType: AnimType.scale,
+                        title: 'Lưu toa thuốc thành công',
+                        btnOkOnPress: () {
+                          Navigator.of(context).pop();
+                        },
+                        onDismissCallback: (type) {
+                          if (type != DismissType.btnOk) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        btnOkIcon: Icons.check_circle,
+                        btnCancel: null,
+                        btnOkText: 'OK',
+                      ).show();
+                    }
+                  } else {
+                    AwesomeDialog(
+                      context: context,
+                      dialogType: DialogType.error,
+                      animType: AnimType.scale,
+                      title: 'Lỗi khi lưu toa thuốc',
+                      desc: 'Vui lòng nhập thông tin toa thuốc.',
+                      btnOkOnPress: () {},
+                      btnOkIcon: Icons.check_circle,
+                      btnCancel: null,
+                      btnOkText: 'OK',
+                    ).show();
+                  }
+                },
+              );
             },
           ),
         ],
@@ -469,63 +491,88 @@ class _DrugPrescriptionEditScreenState
                   },
                 ),
                 if (widget.isEditState) ...[
-                  TextButton.icon(
-                    label: Text("Xóa toa thuốc"),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      iconColor: Colors.white,
-                      backgroundColor: Colors.red,
-                    ),
-                    icon: Icon(Icons.delete_forever_outlined),
-                    onPressed: () async {
-                      AwesomeDialog(
-                        context: context,
-                        dialogType: DialogType.warning,
-                        animType: AnimType.scale,
-                        title: 'Xóa toa thuốc',
-                        desc:
-                            'Hành động này không thể hoàn tác.\nXóa toa thuốc này?',
-                        btnOkOnPress: () async {
-                          showDialog(
-                            barrierDismissible: false,
+                  Consumer<DrugPrescriptionManager>(
+                    builder: (context, drugDPManager, child) {
+                      return TextButton.icon(
+                        label: Text("Xóa toa thuốc"),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          iconColor: Colors.white,
+                          backgroundColor: Colors.red,
+                        ),
+                        icon: Icon(Icons.delete_forever_outlined),
+                        onPressed: () async {
+                          AwesomeDialog(
                             context: context,
-                            builder: (context) {
-                              return const MediAppLoadingDialog();
-                            },
-                          );
-                          if (context.mounted) {
-                            await context
-                                .read<DrugPrescriptionManager>()
-                                .deleteDrugPrescription(drugPrescription.id!);
-                            if (context.mounted) {
-                              Navigator.of(context).pop();
-                              AwesomeDialog(
+                            dialogType: DialogType.warning,
+                            animType: AnimType.scale,
+                            title: 'Xóa toa thuốc',
+                            desc:
+                                'Hành động này không thể hoàn tác.\nXóa toa thuốc này?',
+                            btnOkOnPress: () async {
+                              showDialog(
+                                barrierDismissible: false,
                                 context: context,
-                                dialogType: DialogType.info,
-                                animType: AnimType.scale,
-                                title: 'Xóa toa thuốc thành công',
-                                btnOkOnPress: () {
+                                builder: (context) {
+                                  return const MediAppLoadingDialog();
+                                },
+                              );
+                              if (context.mounted) {
+                                await drugDPManager.deleteDrugPrescription(
+                                  drugPrescription.id!,
+                                );
+                                if (context.mounted) {
                                   Navigator.of(context).pop();
-                                },
-                                onDismissCallback: (type) {
-                                  if (type != DismissType.btnOk) {
-                                    Navigator.of(context).pop();
+                                  if (drugDPManager.hasError) {
+                                    AwesomeDialog(
+                                      context: context,
+                                      dialogType: DialogType.error,
+                                      animType: AnimType.scale,
+                                      headerAnimationLoop: false,
+                                      title: "Lỗi kết nối",
+                                      desc: drugDPManager.errorMessage,
+                                      btnOkText: "OK",
+                                      btnOkOnPress: () {},
+                                      btnOkColor: Theme.of(
+                                        context,
+                                      ).colorScheme.primaryContainer,
+                                      onDismissCallback: (type) {
+                                        return;
+                                      },
+                                    ).show();
+                                    drugDPManager.clearError();
+                                    return;
                                   }
-                                },
-                                btnOkIcon: Icons.check_circle,
-                                btnCancel: null,
-                                btnOkText: 'OK',
-                              ).show();
-                            }
-                          }
+
+                                  AwesomeDialog(
+                                    context: context,
+                                    dialogType: DialogType.info,
+                                    animType: AnimType.scale,
+                                    title: 'Xóa toa thuốc thành công',
+                                    btnOkOnPress: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    onDismissCallback: (type) {
+                                      if (type != DismissType.btnOk) {
+                                        Navigator.of(context).pop();
+                                      }
+                                    },
+                                    btnOkIcon: Icons.check_circle,
+                                    btnCancel: null,
+                                    btnOkText: 'OK',
+                                  ).show();
+                                }
+                              }
+                            },
+                            btnCancelOnPress: () async {},
+                            btnOkIcon: Icons.delete_forever,
+                            btnOkColor: Colors.red,
+                            btnOkText: 'Đồng ý',
+                            btnCancelText: 'Từ chối',
+                            btnCancelColor: Colors.grey,
+                          ).show();
                         },
-                        btnCancelOnPress: () async {},
-                        btnOkIcon: Icons.delete_forever,
-                        btnOkColor: Colors.red,
-                        btnOkText: 'Đồng ý',
-                        btnCancelText: 'Từ chối',
-                        btnCancelColor: Colors.grey,
-                      ).show();
+                      );
                     },
                   ),
                 ],

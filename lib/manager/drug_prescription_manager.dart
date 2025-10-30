@@ -6,11 +6,21 @@ import 'package:flutter/material.dart';
 
 class DrugPrescriptionManager with ChangeNotifier {
   List<DrugPrescription> _drugPrescriptionList = [];
-  List<DrugPrescription> get drugPrescriptions => _drugPrescriptionList;
   late final DrugPrescriptionService _drugPrescriptionService;
+  bool _hasError = false;
+  String _errorMessage = '';
+
+  List<DrugPrescription> get drugPrescriptions => _drugPrescriptionList;
+  bool get hasError => _hasError;
+  String get errorMessage => _errorMessage;
 
   DrugPrescriptionManager() {
     _drugPrescriptionService = DrugPrescriptionService();
+  }
+
+  void clearError() {
+    _hasError = false;
+    _errorMessage = '';
   }
 
   Future<void> fetchDrugPrescriptions() async {
@@ -28,7 +38,11 @@ class DrugPrescriptionManager with ChangeNotifier {
     final newDP = await _drugPrescriptionService.addDrugPrescription(
       drugPrescription,
     );
-    if (newDP == null) return;
+    if (newDP == null) {
+      _hasError = true;
+      _errorMessage = 'Lưu toa thuốc thất bại.';
+      return;
+    }
     _drugPrescriptionList.add(newDP);
     notifyListeners();
   }
@@ -37,7 +51,11 @@ class DrugPrescriptionManager with ChangeNotifier {
     final updatedDP = await _drugPrescriptionService.updateDrugPrescription(
       drugPrescription,
     );
-    if (updatedDP == null) return;
+    if (updatedDP == null) {
+      _hasError = true;
+      _errorMessage = 'Lưu toa thuốc thất bại.';
+      return;
+    }
     _drugPrescriptionList.removeWhere((dp) => dp.id == updatedDP.id);
     _drugPrescriptionList.add(updatedDP);
     notifyListeners();
@@ -45,7 +63,11 @@ class DrugPrescriptionManager with ChangeNotifier {
 
   Future<void> deleteDrugPrescription(String id) async {
     final isDeleted = await _drugPrescriptionService.removeDrugPrescription(id);
-    if (!isDeleted) return;
+    if (!isDeleted) {
+      _hasError = true;
+      _errorMessage = 'Xóa toa thuốc thất bại.';
+      return;
+    }
     _drugPrescriptionList.removeWhere((dp) => dp.id == id);
     notifyListeners();
   }

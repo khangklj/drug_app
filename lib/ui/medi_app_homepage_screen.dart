@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/models/drug_prescription.dart';
@@ -45,6 +46,23 @@ class _MediAppHomepageScreenState extends State<MediAppHomepageScreen> {
         final OCRDrugLabelModel? ocrResult = await OcrService()
             .postDrugLabelImage(file);
         if (ocrResult == null) {
+          if (mounted) {
+            Navigator.of(context).pop();
+            AwesomeDialog(
+              context: context,
+              dialogType: DialogType.error,
+              animType: AnimType.scale,
+              headerAnimationLoop: false,
+              title: "Lỗi kết nối",
+              desc: "Vui lòng thử lại.",
+              btnOkText: "OK",
+              btnOkOnPress: () {},
+              btnOkColor: Theme.of(context).colorScheme.primaryContainer,
+              onDismissCallback: (type) {
+                return;
+              },
+            ).show();
+          }
           return;
         }
         if (mounted) {
@@ -131,8 +149,28 @@ class _MediAppHomepageScreenState extends State<MediAppHomepageScreen> {
             return const MediAppLoadingDialog();
           },
         );
-        List<DrugPrescriptionItem> dpItems = await OcrService()
+        List<DrugPrescriptionItem>? dpItems = await OcrService()
             .postDrugPrescriptionImage(file);
+        if (dpItems == null) {
+          if (mounted) {
+            Navigator.of(context).pop();
+            AwesomeDialog(
+              context: context,
+              dialogType: DialogType.error,
+              animType: AnimType.scale,
+              headerAnimationLoop: false,
+              title: "Lỗi kết nối",
+              desc: "Vui lòng thử lại.",
+              btnOkText: "OK",
+              btnOkOnPress: () {},
+              btnOkColor: Theme.of(context).colorScheme.primaryContainer,
+              onDismissCallback: (type) {
+                return;
+              },
+            ).show();
+          }
+          return;
+        }
         DrugPrescription newDP = DrugPrescription(
           id: null,
           customName: null,
@@ -270,24 +308,28 @@ class _MediAppHomepageScreenState extends State<MediAppHomepageScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: "Gõ từ khóa để tìm kiếm thuốc...",
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(
-                        context,
-                      ).colorScheme.tertiaryContainer,
-                    ),
-                    readOnly: true,
-                    onTap: () {
-                      showSearch(
-                        context: context,
-                        delegate: DrugSearchDelegate(),
+                  Consumer<DrugManager>(
+                    builder: (context, drugManager, child) {
+                      return TextField(
+                        decoration: InputDecoration(
+                          hintText: "Gõ từ khóa để tìm kiếm thuốc...",
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.tertiaryContainer,
+                        ),
+                        readOnly: true,
+                        onTap: () {
+                          showSearch(
+                            context: context,
+                            delegate: DrugSearchDelegate(),
+                          );
+                        },
                       );
                     },
                   ),
