@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:collection/collection.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
+import 'package:drug_app/manager/notification_manager.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/services/ocr_service.dart';
@@ -10,9 +11,12 @@ import 'package:drug_app/ui/components/medi_app_loading_dialog.dart';
 import 'package:drug_app/ui/components/medi_app_drawer.dart';
 import 'package:drug_app/ui/components/medi_app_modal_bottom_sheet_icon.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_edit_screen.dart';
+import 'package:drug_app/ui/settings_screen.dart';
 import 'package:drug_app/utils.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 enum FilterDrugPrescriptionOptions { all, active, notActive }
@@ -237,7 +241,49 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const SizedBox(height: 10),
+            Consumer<NotificationManager>(
+              builder: (context, manager, child) {
+                if (!manager.notificationStatus.isGranted) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: "⚠️ Thông báo chưa được bật!\nVào ",
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium!.copyWith(height: 1.6),
+                          ),
+                          TextSpan(
+                            text: "cài đặt",
+                            style: Theme.of(context).textTheme.bodyMedium!
+                                .copyWith(
+                                  color: Colors.blue,
+                                  decoration: TextDecoration.underline,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.of(
+                                  context,
+                                ).pushNamed(SettingsScreen.routeName);
+                              },
+                          ),
+                          TextSpan(
+                            text: " để bật thông báo.",
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+            const SizedBox(height: 8),
             if (_filterOption == FilterDrugPrescriptionOptions.all) ...[
               ExpansionTile(
                 initiallyExpanded: true,
