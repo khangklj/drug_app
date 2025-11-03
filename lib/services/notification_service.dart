@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -57,6 +58,7 @@ class NotificationService {
             'Daily reminder notifications for drug prescriptions',
         importance: Importance.max,
         priority: Priority.high,
+        additionalFlags: Int32List.fromList(<int>[4]),
       );
 
   Future<NotificationAppLaunchDetails?> get notifcationAppLaunchDetails =>
