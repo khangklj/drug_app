@@ -66,9 +66,12 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
             return const MediAppLoadingDialog();
           },
         );
-        List<DrugPrescriptionItem>? dpItems = await OcrService()
-            .postDrugPrescriptionImage(file);
-        if (dpItems == null) {
+        // List<DrugPrescriptionItem>? dpItems = await OcrService()
+        //     .postDrugPrescriptionImage(file);
+        DrugPrescription? dp = await OcrService().postDrugPrescriptionImage(
+          file,
+        );
+        if (dp == null) {
           if (mounted) {
             Navigator.of(context).pop();
             AwesomeDialog(
@@ -88,17 +91,17 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
           }
           return;
         }
-        DrugPrescription newDP = DrugPrescription(
-          id: null,
-          customName: null,
-          deviceId: null,
-          isActive: true,
-          items: dpItems,
-        );
+        // DrugPrescription newDP = DrugPrescription(
+        //   id: null,
+        //   customName: null,
+        //   deviceId: null,
+        //   isActive: true,
+        //   items: dpItems,
+        // );
         if (mounted) {
           Navigator.of(context).popAndPushNamed(
             DrugPrescriptionEditScreen.routeName,
-            arguments: newDP,
+            arguments: dp,
           );
         }
       }

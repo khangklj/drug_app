@@ -7,6 +7,7 @@ import 'package:drug_app/ui/components/medi_app_loading_dialog.dart';
 import 'package:drug_app/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
@@ -108,6 +109,9 @@ class _DrugPrescriptionEditScreenState
   bool _showBackToTopButton = false;
   bool _isSortAscending = false;
 
+  final TextEditingController _scheduledDateController =
+      TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -126,6 +130,10 @@ class _DrugPrescriptionEditScreenState
         }
       }
     });
+
+    _scheduledDateController.text = drugPrescription.scheduledDate != null
+        ? DateFormat('dd/MM/yyyy').format(drugPrescription.scheduledDate!)
+        : DateFormat('dd/MM/yyyy').format(DateTime.now());
   }
 
   @override
@@ -135,6 +143,8 @@ class _DrugPrescriptionEditScreenState
         value.dispose();
       }
     }
+    _scheduledDateController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -262,6 +272,12 @@ class _DrugPrescriptionEditScreenState
       deviceId: drugPrescription.deviceId,
       items: dpItems,
       isActive: drugPrescription.isActive,
+      patientName: drugPrescription.patientName,
+      patientAge: drugPrescription.patientAge,
+      patientGender: drugPrescription.patientGender,
+      diagnosis: drugPrescription.diagnosis,
+      doctorName: drugPrescription.doctorName,
+      scheduledDate: drugPrescription.scheduledDate,
     );
 
     return dp;
@@ -275,6 +291,22 @@ class _DrugPrescriptionEditScreenState
             sortCardsByDrugNameComparator(a, b, ascending: _isSortAscending),
       );
     });
+  }
+
+  void _showScheduledDatePicker() {
+    DatePicker.showDatePicker(
+      context,
+      showTitleActions: true,
+      currentTime: DateFormat(
+        "dd/MM/yyyy",
+      ).parse(_scheduledDateController.text),
+      locale: LocaleType.vi,
+      onConfirm: (date) {
+        setState(() {
+          _scheduledDateController.text = DateFormat('dd/MM/yyyy').format(date);
+        });
+      },
+    );
   }
 
   @override
@@ -430,6 +462,11 @@ class _DrugPrescriptionEditScreenState
                     });
                   },
                 ),
+                const SizedBox(height: 20),
+                Text(
+                  "Các thông tin chung",
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
 
                 const SizedBox(height: 20),
                 TextFormField(
@@ -445,6 +482,133 @@ class _DrugPrescriptionEditScreenState
                     });
                   },
                 ),
+
+                const SizedBox(height: 20),
+                TextFormField(
+                  autovalidateMode: AutovalidateMode.onUnfocus,
+                  initialValue: drugPrescription.patientName,
+                  decoration: const InputDecoration(labelText: 'Họ và tên (*)'),
+                  onChanged: (value) {
+                    setState(() {
+                      drugPrescription = drugPrescription.copyWith(
+                        patientName: value,
+                      );
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Vui lòng nhập họ và tên';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: DropdownMenuFormField(
+                        label: const Text('Giới tính'),
+                        initialSelection:
+                            drugPrescription.patientGender ?? 'male',
+                        dropdownMenuEntries: [
+                          DropdownMenuEntry(value: 'male', label: 'Nam'),
+                          DropdownMenuEntry(value: 'female', label: 'Nữ'),
+                        ],
+                        onSelected: (value) {
+                          setState(() {
+                            drugPrescription = drugPrescription.copyWith(
+                              patientGender: value,
+                            );
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 1,
+                      child: TextFormField(
+                        autovalidateMode: AutovalidateMode.onUnfocus,
+                        initialValue: drugPrescription.patientAge?.toString(),
+                        decoration: const InputDecoration(
+                          labelText: 'Tuổi (*)',
+                        ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Vui lòng nhập tuổi';
+                          }
+                          final numValue = int.tryParse(value);
+                          if (numValue == null ||
+                              numValue < 1 ||
+                              numValue > 200) {
+                            return 'Vui lòng nhập tuổi hợp lệ';
+                          }
+                          return null;
+                        },
+                        onChanged: (value) {
+                          setState(() {
+                            drugPrescription = drugPrescription.copyWith(
+                              patientAge: value.isEmpty
+                                  ? null
+                                  : int.parse(value),
+                            );
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  keyboardType: TextInputType.multiline,
+                  maxLines: null,
+                  initialValue: drugPrescription.diagnosis,
+                  decoration: const InputDecoration(
+                    labelText: 'Chẩn đoán bệnh',
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      drugPrescription = drugPrescription.copyWith(
+                        diagnosis: value,
+                      );
+                    });
+                  },
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  initialValue: drugPrescription.doctorName,
+                  decoration: const InputDecoration(labelText: 'Bác sĩ khám'),
+                  onChanged: (value) {
+                    setState(() {
+                      drugPrescription = drugPrescription.copyWith(
+                        doctorName: value,
+                      );
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _scheduledDateController,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Ngày tái khám',
+                    border: OutlineInputBorder(),
+                    suffixIcon: Icon(Icons.calendar_today),
+                  ),
+                  onTap: _showScheduledDatePicker,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Vui lòng chọn ngày tái khám';
+                    }
+                    return null;
+                  },
+                ),
+
                 const SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),

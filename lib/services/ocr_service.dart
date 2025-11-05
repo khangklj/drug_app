@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/models/ocr_drug_label_model.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 
 class OcrService {
@@ -44,9 +46,7 @@ class OcrService {
     }
   }
 
-  Future<List<DrugPrescriptionItem>?> postDrugPrescriptionImage(
-    File file,
-  ) async {
+  Future<DrugPrescription?> postDrugPrescriptionImage(File file) async {
     final endpoint = '$_apiUrl/drug_prescription';
     try {
       final request = http.MultipartRequest('POST', Uri.parse(endpoint));
@@ -61,14 +61,26 @@ class OcrService {
       final response = await request.send();
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
-        final jsonResponse = jsonDecode(responseBody);
+        final data = jsonDecode(responseBody)['data'] as Map<String, dynamic>;
 
         final List<DrugPrescriptionItem> dpItems = [];
-        for (final item in jsonResponse['data']['drug_prescription_items']) {
+        for (final item in data['items']) {
           final dpItem = DrugPrescriptionItem.fromJson(item);
           dpItems.add(dpItem);
         }
-        return dpItems;
+        final scheduledDate = DateFormat(
+          "dd/MM/yyyy",
+        ).parse(data['scheduled_date']);
+        data.addAll({
+          "id": null,
+          "custom_name": null,
+          "device_id": null,
+          "is_active": true,
+          "items": dpItems,
+          "scheduled_date": scheduledDate.toString(),
+        });
+        DrugPrescription dp = DrugPrescription.fromJson(data);
+        return dp;
       } else if (response.statusCode == 400) {
         throw Exception("Invalid file type");
       } else {
