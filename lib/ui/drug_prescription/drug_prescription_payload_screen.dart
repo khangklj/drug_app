@@ -1,7 +1,10 @@
+import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
+import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/ui/components/medi_app_drawer.dart';
+import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:drug_app/ui/medi_app_homepage_screen.dart';
 import 'package:drug_app/utils.dart';
 import 'package:flutter/material.dart';
@@ -77,6 +80,7 @@ class DrugPrescriptionPayloadScreen extends StatelessWidget {
                   ] else ...[
                     ListView.separated(
                       shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
                       separatorBuilder: (context, index) =>
                           const SizedBox(height: 10),
                       itemCount: dpList.length,
@@ -86,6 +90,11 @@ class DrugPrescriptionPayloadScreen extends StatelessWidget {
                           timeOfDay: timeOfDay,
                         );
                       },
+                    ),
+                    const SizedBox(height: 15),
+                    Text(
+                      "💡 Tips: Nhấn giữ để xem thông tin thuốc",
+                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
                   ],
                 ],
@@ -165,33 +174,74 @@ class _DrugPrescriptionCheckBoxWidgetState
           child: Column(
             children: [
               for (int index = 0; index < widget.dpItems.length; index++)
-                CheckboxListTile(
-                  title: Text(
-                    widget.dpItems[index].drugName,
-                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                      color: dpItemsChecked[index] ? Colors.white : null,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  visualDensity: VisualDensity.compact,
-                  subtitle: Text(
-                    "${formatDoubleNumberToString(widget.dpItems[index].quantity!)} ${widget.dpItems[index].measurement}",
-                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      color: dpItemsChecked[index] ? Colors.white : null,
-                    ),
-                  ),
-                  value: dpItemsChecked[index],
-                  onChanged: (value) {
-                    toggleChild(index, value);
+                Builder(
+                  builder: (context) {
+                    final dpItem = widget.dpItems[index];
+                    final drugManager = context.read<DrugManager>();
+                    final Drug? drug = dpItem.drugId == null
+                        ? null
+                        : drugManager.searchDrugMetadataById(dpItem.drugId!);
+
+                    return GestureDetector(
+                      onLongPress: () {
+                        if (drug == null) return;
+                        Navigator.of(context).pushNamed(
+                          DrugDetailsScreen.routeName,
+                          arguments: dpItem.drugId,
+                        );
+                      },
+                      child: CheckboxListTile(
+                        title: Text(
+                          dpItem.drugName,
+                          style: Theme.of(context).textTheme.bodyLarge!
+                              .copyWith(
+                                color: dpItemsChecked[index]
+                                    ? Colors.white
+                                    : null,
+                              ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        subtitle: Text(
+                          "${formatDoubleNumberToString(dpItem.quantity!)} ${dpItem.measurement}",
+                          style: Theme.of(context).textTheme.bodyMedium!
+                              .copyWith(
+                                color: dpItemsChecked[index]
+                                    ? Colors.white
+                                    : null,
+                              ),
+                        ),
+                        secondary: drug != null
+                            ? SizedBox(
+                                width: 60,
+                                height: 45,
+                                child: Image.network(
+                                  drug.getImage(),
+                                  fit: BoxFit.fill,
+                                ),
+                              )
+                            : SizedBox(
+                                width: 60,
+                                height: 45,
+                                child: Container(),
+                              ),
+                        value: dpItemsChecked[index],
+                        onChanged: (value) {
+                          toggleChild(index, value);
+                        },
+                        selectedTileColor: Colors.blue.shade800,
+                        selected: dpItemsChecked[index],
+                        fillColor: WidgetStateProperty.resolveWith<Color>((
+                          states,
+                        ) {
+                          if (states.contains(WidgetState.selected)) {
+                            return Colors.green;
+                          }
+                          return Colors.transparent;
+                        }),
+                      ),
+                    );
                   },
-                  selectedTileColor: Colors.blue.shade800,
-                  selected: dpItemsChecked[index],
-                  fillColor: WidgetStateProperty.resolveWith<Color>((states) {
-                    if (states.contains(WidgetState.selected)) {
-                      return Colors.green;
-                    }
-                    return Colors.transparent;
-                  }),
                 ),
             ],
           ),

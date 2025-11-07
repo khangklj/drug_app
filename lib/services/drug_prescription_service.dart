@@ -166,6 +166,7 @@ class DrugPrescriptionService {
       for (final result in results) {
         final body = result.body as Map<String, dynamic>?;
         if (body == null) continue; // skip delete case
+        body.addAll({'drugId': body['drug']});
         final dpItemModel = DrugPrescriptionItem.fromJson(body);
         newDPItem.add(dpItemModel);
       }

@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/services/drug_service.dart';
 import 'package:flutter/material.dart';
@@ -67,6 +68,10 @@ class DrugManager with ChangeNotifier {
           false;
       return aliasesMatch || name.contains(queryLower);
     }).toList();
+  }
+
+  Drug? searchDrugMetadataById(String id) {
+    return _drugs.firstWhereOrNull((drug) => drug.id == id);
   }
 
   List<Drug> searchDrugsMetadataByIds(List<String> ids) {
