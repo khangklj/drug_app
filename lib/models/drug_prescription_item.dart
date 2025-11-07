@@ -21,6 +21,7 @@ class DrugPrescriptionItem {
   final TimeOfDayValues timeOfDay;
   final double? quantity;
   final String? measurement;
+  final String? drugId;
 
   DrugPrescriptionItem({
     required this.id,
@@ -28,6 +29,7 @@ class DrugPrescriptionItem {
     required this.timeOfDay,
     this.quantity,
     this.measurement,
+    this.drugId,
   });
 
   DrugPrescriptionItem copyWith({
@@ -36,6 +38,7 @@ class DrugPrescriptionItem {
     TimeOfDayValues? timeOfDay,
     double? quantity,
     String? measurement,
+    String? drugId,
   }) {
     return DrugPrescriptionItem(
       id: id ?? this.id,
@@ -43,6 +46,7 @@ class DrugPrescriptionItem {
       timeOfDay: timeOfDay ?? this.timeOfDay,
       quantity: quantity ?? this.quantity,
       measurement: measurement ?? this.measurement,
+      drugId: drugId ?? this.drugId,
     );
   }
 
@@ -53,6 +57,7 @@ class DrugPrescriptionItem {
       timeOfDay: TimeOfDayValues.values.byName(json['time_of_day']),
       quantity: double.parse(json['quantity'].toString()),
       measurement: json['measurement'],
+      drugId: json['drugId'],
     );
   }
 

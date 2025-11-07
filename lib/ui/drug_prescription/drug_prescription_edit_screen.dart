@@ -131,9 +131,12 @@ class _DrugPrescriptionEditScreenState
       }
     });
 
-    _scheduledDateController.text = drugPrescription.scheduledDate != null
-        ? DateFormat('dd/MM/yyyy').format(drugPrescription.scheduledDate!)
-        : DateFormat('dd/MM/yyyy').format(DateTime.now());
+    final scheduledDate = drugPrescription.scheduledDate ?? DateTime.now();
+
+    _scheduledDateController.text = DateFormat(
+      'dd/MM/yyyy',
+    ).format(scheduledDate);
+    drugPrescription = drugPrescription.copyWith(scheduledDate: scheduledDate);
   }
 
   @override
@@ -304,6 +307,7 @@ class _DrugPrescriptionEditScreenState
       onConfirm: (date) {
         setState(() {
           _scheduledDateController.text = DateFormat('dd/MM/yyyy').format(date);
+          drugPrescription = drugPrescription.copyWith(scheduledDate: date);
         });
       },
     );

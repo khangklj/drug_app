@@ -13,7 +13,7 @@ class DrugService {
   }
 
   // Helper functions
-  List<DrugAlias> _parseDrugAliases(RecordModel drugModel) {
+  static List<DrugAlias> parseDrugAliases(RecordModel drugModel) {
     final List<DrugAlias> aliasList = [];
     final drugAliasModels = drugModel.get<List<RecordModel>>("expand.aliases");
     for (final drugAliasModel in drugAliasModels) {
@@ -42,7 +42,7 @@ class DrugService {
           );
 
       for (final drugModel in resultList.items) {
-        final List<DrugAlias> aliasList = _parseDrugAliases(drugModel);
+        final List<DrugAlias> aliasList = parseDrugAliases(drugModel);
 
         final drug = Drug.fromJson(
           drugModel.toJson()..addAll({
@@ -116,7 +116,7 @@ class DrugService {
           .collection('drug')
           .getFullList(expand: 'aliases', filter: filter);
       for (final record in recordList) {
-        final List<DrugAlias> aliasList = _parseDrugAliases(record);
+        final List<DrugAlias> aliasList = parseDrugAliases(record);
         final drug = Drug.fromJson(
           record.toJson()..addAll({
             'image': getImageUrl(pb, record),
