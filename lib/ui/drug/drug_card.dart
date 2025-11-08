@@ -4,7 +4,16 @@ import 'package:flutter/material.dart';
 
 class DrugCard extends StatelessWidget {
   final Drug drug;
-  const DrugCard({super.key, required this.drug});
+  final bool hideFavoriteButton;
+  final double? imageWidth;
+  final double? imageHeight;
+  const DrugCard({
+    super.key,
+    required this.drug,
+    this.hideFavoriteButton = false,
+    this.imageWidth,
+    this.imageHeight,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +32,8 @@ class DrugCard extends StatelessWidget {
             children: [
               const SizedBox(height: 12),
               SizedBox(
-                width: 300,
+                width: imageWidth ?? 200,
+                height: imageHeight ?? 125,
                 child: Image.network(
                   drug.getImage(thumb: '250x250f'),
                   fit: BoxFit.fill,
@@ -53,6 +63,7 @@ class DrugCard extends StatelessWidget {
                 style: Theme.of(
                   context,
                 ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
               ),
               if (drug.aliases != null && drug.aliases!.isNotEmpty)
                 Text(
@@ -62,7 +73,7 @@ class DrugCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               const SizedBox(height: 2),
-              AddToFavoriteButton(drug: drug),
+              if (!hideFavoriteButton) AddToFavoriteButton(drug: drug),
             ],
           ),
         ),

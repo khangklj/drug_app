@@ -77,4 +77,17 @@ class DrugManager with ChangeNotifier {
   List<Drug> searchDrugsMetadataByIds(List<String> ids) {
     return _drugs.where((drug) => ids.contains(drug.id)).toList();
   }
+
+  Future<List<Drug>> fetchRelatedDrugs(String drugId) async {
+    final Drug? drug = searchDrugMetadataById(drugId);
+    if (drug == null || drug.categories == null) return [];
+    final String filter = drug.categories!
+        .map((category) => 'category.id?="${category.id}"')
+        .join('||');
+    final List<Drug> drugList = await _drugService.fetchDrugMetadata(
+      filter: filter,
+    );
+
+    return drugList;
+  }
 }

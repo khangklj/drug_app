@@ -1,4 +1,5 @@
 import 'package:drug_app/models/drug_alias.dart';
+import 'package:drug_app/models/drug_category.dart';
 import 'package:drug_app/models/drug_data.dart';
 
 class Drug {
@@ -7,6 +8,7 @@ class Drug {
   final String _image;
   final List<DrugData>? data;
   final List<DrugAlias>? aliases;
+  final List<DrugCategory>? categories;
 
   Drug({
     required this.id,
@@ -14,6 +16,7 @@ class Drug {
     required String image,
     this.data = const [],
     this.aliases = const [],
+    this.categories = const [],
   }) : _image = image;
   Drug copyWith({
     String? id,
@@ -21,6 +24,7 @@ class Drug {
     String? image,
     List<DrugData>? data,
     List<DrugAlias>? aliases,
+    List<DrugCategory>? categories,
   }) {
     return Drug(
       id: id ?? this.id,
@@ -28,6 +32,7 @@ class Drug {
       image: image ?? _image,
       data: data ?? this.data,
       aliases: aliases ?? this.aliases,
+      categories: categories ?? this.categories,
     );
   }
 
@@ -38,6 +43,7 @@ class Drug {
       image: json['image'],
       data: json['data'],
       aliases: json['aliases'],
+      categories: json['category'],
     );
   }
 

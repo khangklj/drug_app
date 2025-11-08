@@ -1,9 +1,13 @@
+import 'dart:math';
+
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/manager/internet_manager.dart';
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/models/drug_data.dart';
 import 'package:drug_app/ui/components/add_to_favorite_button.dart';
+import 'package:drug_app/ui/drug/drug_card.dart';
+import 'package:drug_app/ui/medi_app_homepage_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -21,11 +25,17 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isSearching = false;
+
+  late final Future<List<Drug>> fetchRelatedDrugs;
+
   @override
   void initState() {
     super.initState();
     _fetchDrugsNotifier = ValueNotifier(
       context.read<DrugManager>().fetchDrugDetails(id: widget.drugId),
+    );
+    fetchRelatedDrugs = context.read<DrugManager>().fetchRelatedDrugs(
+      widget.drugId,
     );
     InternetManager.instance.register(_retryFetch);
     _searchController.addListener(_onSearchChanged);
@@ -275,6 +285,59 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
                         title: 'Dược động học',
                         content: drugData.pharmacokinetics,
                       ),
+                      const SizedBox(height: 25),
+                      Text(
+                        "Các thuốc liên quan khác",
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      FutureBuilder(
+                        future: fetchRelatedDrugs,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+                          if (snapshot.hasError) {
+                            return const Center(
+                              child: Text(
+                                'Có lỗi đã xảy ra. Vui lòng tải lại trang.',
+                              ),
+                            );
+                          }
+                          final List<Drug> relatedDrugs = snapshot.data!;
+                          final int lengthLimit = 7;
+                          late final List<Drug> relatedDrugsBuildList;
+                          if (relatedDrugs.length <= lengthLimit) {
+                            relatedDrugsBuildList = relatedDrugs;
+                          } else {
+                            List<Drug> relatedDrugsCopy = List.of(relatedDrugs);
+                            relatedDrugsCopy.shuffle(Random());
+                            relatedDrugsBuildList = relatedDrugsCopy;
+                          }
+                          return Scrollbar(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  for (int i = 0; i < lengthLimit; i++)
+                                    SizedBox(
+                                      height: 240,
+                                      width: 180,
+                                      child: DrugCard(
+                                        drug: relatedDrugsBuildList[i],
+                                        hideFavoriteButton: true,
+                                        imageWidth: 200,
+                                        imageHeight: 120,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -341,6 +404,15 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
                             _searchQuery = '';
                           }
                         });
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.home),
+                      onPressed: () {
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          MediAppHomepageScreen.routeName,
+                          (route) => route.isFirst,
+                        );
                       },
                     ),
                     AddToFavoriteButton(drug: drug),

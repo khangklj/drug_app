@@ -1,5 +1,6 @@
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/models/drug_alias.dart';
+import 'package:drug_app/models/drug_category.dart';
 import 'package:drug_app/models/drug_data.dart';
 import 'package:drug_app/services/pocketbase_client.dart';
 import 'package:logger/logger.dart';
@@ -21,6 +22,18 @@ class DrugService {
       aliasList.add(alias);
     }
     return aliasList;
+  }
+
+  static List<DrugCategory> parseDrugCategory(RecordModel drugModel) {
+    final List<DrugCategory> categoryList = [];
+    final drugCategoryModels = drugModel.get<List<RecordModel>>(
+      "expand.category",
+    );
+    for (final drugCategoryModel in drugCategoryModels) {
+      final category = DrugCategory.fromJson(drugCategoryModel.toJson());
+      categoryList.add(category);
+    }
+    return categoryList;
   }
 
   Future<List<Drug>> fetchDrugs({
@@ -72,7 +85,7 @@ class DrugService {
       final pb = await getPocketBaseInstance();
       final drugModel = await pb
           .collection('drug')
-          .getOne(id, expand: 'data,aliases');
+          .getOne(id, expand: 'data,aliases,category');
 
       if (expandData) {
         final drugDataModels = drugModel.get<List<RecordModel>>("expand.data");
@@ -95,11 +108,14 @@ class DrugService {
         }
       }
 
+      final categoryList = parseDrugCategory(drugModel);
+
       return Drug.fromJson(
         drugModel.toJson()..addAll({
           'image': getImageUrl(pb, drugModel, thumb: thumb),
           'data': dataList,
           'aliases': aliasList,
+          'category': categoryList,
         }),
       );
     } catch (error) {
@@ -114,13 +130,15 @@ class DrugService {
       final pb = await getPocketBaseInstance();
       final recordList = await pb
           .collection('drug')
-          .getFullList(expand: 'aliases', filter: filter);
+          .getFullList(expand: 'aliases,category', filter: filter);
       for (final record in recordList) {
         final List<DrugAlias> aliasList = parseDrugAliases(record);
+        final List<DrugCategory> categoryList = parseDrugCategory(record);
         final drug = Drug.fromJson(
           record.toJson()..addAll({
             'image': getImageUrl(pb, record),
             'aliases': aliasList,
+            'category': categoryList,
             'data': null,
           }),
         );
