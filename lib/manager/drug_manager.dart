@@ -23,19 +23,6 @@ class DrugManager with ChangeNotifier {
     _errorMessage = '';
   }
 
-  Future<void> fetchDrugs({
-    int page = 1,
-    int perPage = 10,
-    String? filter,
-  }) async {
-    _drugs = await _drugService.fetchDrugs(
-      page: page,
-      perPage: perPage,
-      filter: filter,
-    );
-    notifyListeners();
-  }
-
   Future<Drug?> fetchDrugDetails({required String id}) async {
     final drug = await _drugService.fetchDrugDetails(id);
     if (drug == null) {

@@ -36,42 +36,6 @@ class DrugService {
     return categoryList;
   }
 
-  Future<List<Drug>> fetchDrugs({
-    int page = 1,
-    int perPage = 30,
-    String? thumb,
-    String? filter,
-  }) async {
-    final List<Drug> drugs = [];
-    try {
-      final pb = await getPocketBaseInstance();
-      final resultList = await pb
-          .collection('drug')
-          .getList(
-            page: page,
-            perPage: perPage,
-            filter: filter,
-            expand: 'aliases',
-          );
-
-      for (final drugModel in resultList.items) {
-        final List<DrugAlias> aliasList = parseDrugAliases(drugModel);
-
-        final drug = Drug.fromJson(
-          drugModel.toJson()..addAll({
-            'image': getImageUrl(pb, drugModel, thumb: thumb),
-            'data': null,
-            'aliases': aliasList,
-          }),
-        );
-        drugs.add(drug);
-      }
-    } catch (error) {
-      _logger.e(error);
-    }
-    return drugs;
-  }
-
   Future<Drug?> fetchDrugDetails(
     String id, {
     bool expandData = true,

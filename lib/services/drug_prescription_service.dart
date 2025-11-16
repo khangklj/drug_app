@@ -17,10 +17,11 @@ class DrugPrescriptionService {
     final drugPrescriptionItemModels = drugPrescriptionModel
         .get<List<RecordModel>>("expand.items");
     for (final drugPrescriptionItemModel in drugPrescriptionItemModels) {
-      final alias = DrugPrescriptionItem.fromJson(
-        drugPrescriptionItemModel.toJson(),
+      final dpItem = DrugPrescriptionItem.fromJson(
+        drugPrescriptionItemModel.toJson()
+          ..addAll({'drugId': drugPrescriptionItemModel.get<String?>('drug')}),
       );
-      drugPrescriptionItems.add(alias);
+      drugPrescriptionItems.add(dpItem);
     }
     return drugPrescriptionItems;
   }
@@ -64,6 +65,7 @@ class DrugPrescriptionService {
           'image': DrugService.getImageUrl(pb, record),
           'aliases': aliasList,
           'data': null,
+          'category': null,
         }),
       );
 

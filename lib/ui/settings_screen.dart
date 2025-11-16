@@ -420,15 +420,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
 
-            Align(
-              alignment: Alignment.center,
-              child: TextButton.icon(
-                onPressed: () async {
-                  await NotificationService().printAllPendingNotifications();
-                },
-                label: Text("LOGGING"),
-              ),
-            ),
+            // Align(
+            //   alignment: Alignment.center,
+            //   child: TextButton.icon(
+            //     onPressed: () async {
+            //       await NotificationService().printAllPendingNotifications();
+            //     },
+            //     label: Text("LOGGING"),
+            //   ),
+            // ),
           ],
         );
       },
