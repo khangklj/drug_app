@@ -286,9 +286,11 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
                         content: drugData.pharmacokinetics,
                       ),
                       const SizedBox(height: 25),
-                      Text(
-                        "Các thuốc liên quan khác",
-                        style: Theme.of(context).textTheme.titleMedium,
+                      Center(
+                        child: Text(
+                          "Các thuốc liên quan khác",
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
                       ),
                       FutureBuilder(
                         future: fetchRelatedDrugs,

@@ -4,7 +4,6 @@ import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/manager/notification_manager.dart';
 import 'package:drug_app/manager/settings_manager.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
-import 'package:drug_app/services/notification_service.dart';
 import 'package:drug_app/ui/components/medi_app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
