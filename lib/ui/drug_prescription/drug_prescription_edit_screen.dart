@@ -1,8 +1,10 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:collection/collection.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
+import 'package:drug_app/manager/patient_manager.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
+import 'package:drug_app/models/patient.dart';
 import 'package:drug_app/ui/components/medi_app_loading_dialog.dart';
 import 'package:drug_app/utils.dart';
 import 'package:flutter/material.dart';
@@ -275,9 +277,7 @@ class _DrugPrescriptionEditScreenState
       deviceId: drugPrescription.deviceId,
       items: dpItems,
       isActive: drugPrescription.isActive,
-      patientName: drugPrescription.patientName,
-      patientAge: drugPrescription.patientAge,
-      patientGender: drugPrescription.patientGender,
+      patient: drugPrescription.patient,
       diagnosis: drugPrescription.diagnosis,
       doctorName: drugPrescription.doctorName,
       scheduledDate: drugPrescription.scheduledDate,
@@ -488,80 +488,58 @@ class _DrugPrescriptionEditScreenState
                 ),
 
                 const SizedBox(height: 20),
-                TextFormField(
-                  autovalidateMode: AutovalidateMode.onUnfocus,
-                  initialValue: drugPrescription.patientName,
-                  decoration: const InputDecoration(labelText: 'Họ và tên (*)'),
-                  onChanged: (value) {
-                    setState(() {
-                      drugPrescription = drugPrescription.copyWith(
-                        patientName: value,
-                      );
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Vui lòng nhập họ và tên';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
+                Consumer<PatientManager>(
+                  builder: (context, patientManger, child) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
                       child: DropdownMenuFormField(
-                        label: const Text('Giới tính'),
-                        initialSelection:
-                            drugPrescription.patientGender ?? 'male',
+                        width: double.infinity,
+                        label: const Text(
+                          'Họ và tên người bệnh',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        initialSelection: drugPrescription.patient,
                         dropdownMenuEntries: [
-                          DropdownMenuEntry(value: 'male', label: 'Nam'),
-                          DropdownMenuEntry(value: 'female', label: 'Nữ'),
+                          for (final patient in patientManger.patients)
+                            DropdownMenuEntry(
+                              label: patient.name!,
+                              value: patient,
+                            ),
                         ],
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Vui lòng chọn người bệnh';
+                          }
+                          return null;
+                        },
                         onSelected: (value) {
+                          final patient = value as Patient;
                           setState(() {
                             drugPrescription = drugPrescription.copyWith(
-                              patientGender: value,
+                              patient: patient,
                             );
                           });
                         },
                       ),
-                    ),
-                    const SizedBox(width: 10),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
                     Expanded(
                       flex: 1,
-                      child: TextFormField(
-                        autovalidateMode: AutovalidateMode.onUnfocus,
-                        initialValue: drugPrescription.patientAge?.toString(),
-                        decoration: const InputDecoration(
-                          labelText: 'Tuổi (*)',
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Vui lòng nhập tuổi';
-                          }
-                          final numValue = int.tryParse(value);
-                          if (numValue == null ||
-                              numValue < 1 ||
-                              numValue > 200) {
-                            return 'Vui lòng nhập tuổi hợp lệ';
-                          }
-                          return null;
-                        },
-                        onChanged: (value) {
-                          setState(() {
-                            drugPrescription = drugPrescription.copyWith(
-                              patientAge: value.isEmpty
-                                  ? null
-                                  : int.parse(value),
-                            );
-                          });
-                        },
+                      child: Text(
+                        " Năm sinh: ${drugPrescription.patient?.year ?? ""}",
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: Text(
+                        "Giới tính: ${genderDisplayStringMap[drugPrescription.patient?.gender]}",
+                        style: Theme.of(context).textTheme.bodyLarge,
                       ),
                     ),
                   ],

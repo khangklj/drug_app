@@ -4,6 +4,7 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:collection/collection.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/manager/notification_manager.dart';
+import 'package:drug_app/manager/patient_manager.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/services/ocr_service.dart';
@@ -48,6 +49,7 @@ class DrugPrescriptionScreen extends StatefulWidget {
 class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
   late SortDrugPrescriptionOptions _sortOption;
   late FilterDrugPrescriptionOptions _filterOption;
+  bool _dialogShown = false;
 
   @override
   void initState() {
@@ -68,9 +70,7 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
         );
         // List<DrugPrescriptionItem>? dpItems = await OcrService()
         //     .postDrugPrescriptionImage(file);
-        DrugPrescription? dp = await OcrService().postDrugPrescriptionImage(
-          file,
-        );
+        final dp = await OcrService().postDrugPrescriptionImage(file);
         if (dp == null) {
           if (mounted) {
             Navigator.of(context).pop();
@@ -202,6 +202,7 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
     final List<DrugPrescription> drugPrescriptions = context
         .watch<DrugPrescriptionManager>()
         .drugPrescriptions;
+    final patients = context.watch<PatientManager>().patients;
     final sortedAndFilteredDPs = _applySortAndFilter(
       drugPrescriptions,
       sortOption: _sortOption,
@@ -211,6 +212,21 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
     final inactiveDPs = sortedAndFilteredDPs
         .where((dp) => !dp.isActive)
         .toList();
+
+    if (patients.isEmpty && !_dialogShown) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _dialogShown = true;
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              // TODO: Implement dialog to navigate to patient screen
+            );
+          },
+        );
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         elevation: 4.0,

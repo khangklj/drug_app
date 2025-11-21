@@ -1,6 +1,7 @@
 import 'package:drug_app/ui/drug/drug_favorite_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_screen.dart';
 import 'package:drug_app/ui/medi_app_homepage_screen.dart';
+import 'package:drug_app/ui/patient/patient_screen.dart';
 import 'package:drug_app/ui/settings_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -65,6 +66,24 @@ class MediAppDrawer extends StatelessWidget {
               }
               Navigator.of(context).pushNamedAndRemoveUntil(
                 DrugPrescriptionScreen.routeName,
+                (route) => route.isFirst,
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.list_alt),
+            title: Text(
+              'Quản lý người bệnh',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            onTap: () {
+              Navigator.of(context).pop();
+              if (ModalRoute.of(context)?.settings.name ==
+                  PatientScreen.routeName) {
+                return;
+              }
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                PatientScreen.routeName,
                 (route) => route.isFirst,
               );
             },

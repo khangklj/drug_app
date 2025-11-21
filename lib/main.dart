@@ -3,6 +3,7 @@ import 'package:drug_app/manager/drug_favorite_manager.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/manager/internet_manager.dart';
 import 'package:drug_app/manager/notification_manager.dart';
+import 'package:drug_app/manager/patient_manager.dart';
 import 'package:drug_app/manager/search_history_manager.dart';
 import 'package:drug_app/manager/settings_manager.dart';
 import 'package:drug_app/models/drug.dart';
@@ -18,6 +19,7 @@ import 'package:drug_app/ui/drug_prescription/drug_prescription_edit_screen.dart
 import 'package:drug_app/ui/drug_prescription/drug_prescription_payload_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_screen.dart';
 import 'package:drug_app/ui/medi_app_homepage_screen.dart';
+import 'package:drug_app/ui/patient/patient_screen.dart';
 import 'package:drug_app/ui/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -54,6 +56,7 @@ Future<void> main() async {
   final notifcationManager = NotificationManager();
   final drugManager = DrugManager();
   final drugFavoriteManager = DrugFavoriteManager();
+  final patientMananger = PatientManager();
 
   await InternetManager.instance.init(globalNavigatorKey);
   InternetManager.instance.register(
@@ -61,11 +64,13 @@ Future<void> main() async {
   );
   InternetManager.instance.register(drugManager.fetchDrugsMetadata);
   InternetManager.instance.register(drugFavoriteManager.fetchFavoriteDrugs);
+  InternetManager.instance.register(patientMananger.fetchPatients);
 
   await drugPrescriptionManager.fetchDrugPrescriptions();
   await notifcationManager.initSettings();
   await drugManager.fetchDrugsMetadata();
   await drugFavoriteManager.fetchFavoriteDrugs();
+  await patientMananger.fetchPatients();
 
   final details = await notificationService.notifcationAppLaunchDetails;
   late final TimeOfDayValues? timeOfDayFromNotification;
@@ -93,6 +98,7 @@ Future<void> main() async {
               notificationManager!..updateNotification(drugPrescriptionManager),
           lazy: false,
         ),
+        ChangeNotifierProvider.value(value: patientMananger),
       ],
       child: MyApp(
         startScreen: timeOfDayFromNotification == null
@@ -182,6 +188,13 @@ class MyApp extends StatelessWidget {
         if (settings.name == SettingsScreen.routeName) {
           return MaterialPageRoute(
             builder: (_) => SafeArea(child: SettingsScreen()),
+            settings: settings,
+          );
+        }
+
+        if (settings.name == PatientScreen.routeName) {
+          return MaterialPageRoute(
+            builder: (_) => SafeArea(child: PatientScreen()),
             settings: settings,
           );
         }

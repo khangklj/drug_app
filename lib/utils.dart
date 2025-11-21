@@ -45,3 +45,9 @@ String formatDoubleNumberToString(double value) {
     return value.toString();
   }
 }
+
+final Map<String?, String> genderDisplayStringMap = {
+  "male": "Nam",
+  "female": "Nữ",
+  null: "",
+};

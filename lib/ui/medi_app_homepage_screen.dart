@@ -174,13 +174,6 @@ class _MediAppHomepageScreenState extends State<MediAppHomepageScreen> {
           }
           return;
         }
-        // DrugPrescription newDP = DrugPrescription(
-        //   id: null,
-        //   customName: null,
-        //   deviceId: null,
-        //   isActive: false,
-        //   items: dpItems,
-        // );
         if (mounted) {
           Navigator.of(context).popAndPushNamed(
             DrugPrescriptionEditScreen.routeName,

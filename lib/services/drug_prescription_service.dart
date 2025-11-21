@@ -2,6 +2,7 @@ import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/models/drug_alias.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
+import 'package:drug_app/models/patient.dart';
 import 'package:drug_app/services/drug_service.dart';
 import 'package:drug_app/services/pocketbase_client.dart';
 import 'package:logger/logger.dart';
@@ -26,6 +27,13 @@ class DrugPrescriptionService {
     return drugPrescriptionItems;
   }
 
+  Patient _parsePatient(RecordModel drugPrescriptionModel) {
+    final patientModel = drugPrescriptionModel.get<RecordModel>(
+      'expand.patient',
+    );
+    return Patient.fromJson(patientModel.toJson());
+  }
+
   Future<List<DrugPrescription>> fetchDrugPrescriptions({
     required String deviceId,
   }) async {
@@ -34,12 +42,16 @@ class DrugPrescriptionService {
       final pb = await getPocketBaseInstance();
       final recordList = await pb
           .collection('drug_prescription')
-          .getFullList(expand: 'items', filter: "device_id = '$deviceId'");
+          .getFullList(
+            expand: 'items,patient',
+            filter: "device_id = '$deviceId'",
+          );
       for (final record in recordList) {
         final dpItems = _parseDrugPrescriptionItems(record);
+        final patient = _parsePatient(record);
         drugPrescriptions.add(
           DrugPrescription.fromJson(
-            record.toJson()..addAll({'items': dpItems}),
+            record.toJson()..addAll({'items': dpItems, 'patient': patient}),
           ),
         );
       }
@@ -105,11 +117,15 @@ class DrugPrescriptionService {
           .collection('drug_prescription')
           .create(
             body: drugPrescription.toJson()
-              ..addAll({'items': newDPItems.map((e) => e.id).toList()}),
+              ..addAll({
+                'items': newDPItems.map((e) => e.id).toList(),
+                'patient': drugPrescription.patient!.id,
+              }),
             expand: 'items',
           );
       final newDP = DrugPrescription.fromJson(
-        drugPrescriptionModel.toJson()..addAll({'items': newDPItems}),
+        drugPrescriptionModel.toJson()
+          ..addAll({'items': newDPItems, 'patient': drugPrescription.patient}),
       );
       return newDP;
     } catch (error) {
@@ -177,11 +193,15 @@ class DrugPrescriptionService {
           .update(
             drugPrescription.id!,
             body: drugPrescription.toJson()
-              ..addAll({'items': newDPItem.map((e) => e.id).toList()}),
+              ..addAll({
+                'items': newDPItem.map((e) => e.id).toList(),
+                'patient': drugPrescription.patient!.id,
+              }),
             expand: 'items',
           );
       final updatedDP = DrugPrescription.fromJson(
-        drugPrescriptionModel.toJson()..addAll({'items': newDPItem}),
+        drugPrescriptionModel.toJson()
+          ..addAll({'items': newDPItem, 'patient': drugPrescription.patient}),
       );
       return updatedDP;
     } catch (error) {
