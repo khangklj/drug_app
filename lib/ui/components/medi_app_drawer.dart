@@ -71,7 +71,7 @@ class MediAppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.list_alt),
+            leading: const Icon(Icons.person_outline),
             title: Text(
               'Quản lý người bệnh',
               style: Theme.of(context).textTheme.titleLarge,

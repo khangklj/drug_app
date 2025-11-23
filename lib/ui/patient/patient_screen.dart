@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/manager/patient_manager.dart';
 import 'package:drug_app/models/patient.dart';
 import 'package:drug_app/ui/components/medi_app_drawer.dart';
@@ -20,12 +23,15 @@ class _PatientScreenState extends State<PatientScreen> {
 
   void _showEditPatientDialog(BuildContext context, {Patient? patient}) {
     final formKey = GlobalKey<FormState>();
+    late bool isEditState;
     DateTime selectedDate;
     if (patient == null || patient.year == null) {
-      patient = Patient();
+      patient = Patient(gender: "male", year: DateTime.now().year);
       selectedDate = DateTime.now();
+      isEditState = false;
     } else {
       selectedDate = DateTime(patient.year!);
+      isEditState = true;
     }
     _patientYearTextController.text = selectedDate.year.toString();
 
@@ -112,7 +118,7 @@ class _PatientScreenState extends State<PatientScreen> {
                                               1,
                                             ),
                                             lastDate: DateTime(
-                                              DateTime.now().year + 100,
+                                              DateTime.now().year,
                                               1,
                                             ),
                                             selectedDate: selectedDate,
@@ -163,7 +169,11 @@ class _PatientScreenState extends State<PatientScreen> {
                         },
                       );
 
-                      await patientManger.addPatient(patient!);
+                      if (isEditState) {
+                        await patientManger.updatePatient(patient!);
+                      } else {
+                        await patientManger.addPatient(patient!);
+                      }
 
                       if (context.mounted) {
                         Navigator.of(context).pop();
@@ -192,7 +202,9 @@ class _PatientScreenState extends State<PatientScreen> {
                           context: context,
                           dialogType: DialogType.info,
                           animType: AnimType.scale,
-                          title: 'Thêm thành công',
+                          title: isEditState
+                              ? "Cập nhật thành công"
+                              : "Thêm thành công",
                           btnOkOnPress: () {
                             Navigator.of(context).pop();
                           },
@@ -208,7 +220,9 @@ class _PatientScreenState extends State<PatientScreen> {
                       }
                     }
                   },
-                  child: const Text("Thêm mới"),
+                  child: isEditState
+                      ? const Text("Cập nhật")
+                      : const Text("Thêm mới"),
                 ),
               ],
             );
@@ -216,6 +230,119 @@ class _PatientScreenState extends State<PatientScreen> {
         );
       },
     );
+  }
+
+  void _showDeletePatientDiaglog(
+    BuildContext context, {
+    required Patient patient,
+  }) async {
+    final patientManger = context.read<PatientManager>();
+    final drugPrescriptionManager = context.read<DrugPrescriptionManager>();
+
+    Future<bool> showFirstDialog(BuildContext context) {
+      final completer = Completer<bool>();
+
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.warning,
+        animType: AnimType.scale,
+        title: 'Xóa người bệnh',
+        desc:
+            'Thao tác này sẽ xóa người bệnh khỏi ứng dụng. Bạn có muốn tiếp tục không?',
+        btnOkOnPress: () {
+          completer.complete(true);
+        },
+        btnCancelOnPress: () {
+          completer.complete(false);
+        },
+        btnOkText: "Đồng ý",
+        btnCancelText: "Từ chối",
+        btnOkIcon: Icons.check_circle,
+        btnCancelIcon: Icons.cancel,
+      ).show();
+
+      return completer.future;
+    }
+
+    Future<bool> showSecondDialog(BuildContext context, int count) {
+      final completer = Completer<bool>();
+
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.warning,
+        animType: AnimType.scale,
+        title: 'Cảnh báo',
+        desc:
+            'Hiện người bệnh này còn có $count toa thuốc. Tiếp tục sẽ xóa tất cả toa thuốc người này đang sử dụng.\nBạn chắc chắn chứ?',
+        btnOkOnPress: () {
+          completer.complete(true);
+        },
+        btnCancelOnPress: () {
+          completer.complete(false);
+        },
+        btnOkText: "Chắc chắn",
+        btnCancelText: "Hủy bỏ",
+        btnOkIcon: Icons.check_circle,
+        btnCancelIcon: Icons.cancel,
+      ).show();
+
+      return completer.future;
+    }
+
+    bool isConfirmDelete = false;
+
+    // first confirmation
+    final first = await showFirstDialog(context);
+
+    if (!first) return;
+
+    final dpList = drugPrescriptionManager.findDrugPrescriptionByPatient(
+      patient,
+    );
+
+    if (dpList.isEmpty) {
+      isConfirmDelete = true;
+    } else if (context.mounted) {
+      final second = await showSecondDialog(context, dpList.length);
+
+      if (second) {
+        isConfirmDelete = true;
+      }
+    }
+
+    if (!isConfirmDelete) return;
+
+    if (context.mounted) {
+      showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) {
+          return const MediAppLoadingDialog();
+        },
+      );
+
+      // Delete drug prescriptions
+      for (final dp in dpList) {
+        await drugPrescriptionManager.deleteDrugPrescription(dp.id!);
+      }
+
+      // Delete patient
+      await patientManger.deletePatient(patient.id!);
+
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.success,
+          animType: AnimType.scale,
+          title: 'Xóa người bệnh',
+          desc: 'Người bệnh ${patient.name!} đã xóa khỏi ứng dụng thành công!',
+          btnOkOnPress: () {},
+          btnOkText: "OK",
+          btnOkIcon: Icons.check_circle,
+        ).show();
+      }
+    }
   }
 
   @override
@@ -228,37 +355,19 @@ class _PatientScreenState extends State<PatientScreen> {
             itemCount: patientManager.patients.length,
             itemBuilder: (context, index) {
               final patient = patientManager.patients[index];
-              return Dismissible(
-                key: ValueKey(patient.id),
-                direction: DismissDirection.startToEnd,
-                background: Container(
-                  color: Colors.red,
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 20),
-                      const Icon(Icons.delete, color: Colors.white),
-                    ],
-                  ),
-                ),
-                onDismissed: (direction) {
-                  patientManager.deletePatient(patient.id!);
-                  //TODO: Implement dialog
+              return ListTile(
+                onTap: () {
+                  _showEditPatientDialog(context, patient: patient);
                 },
-                child: ListTile(
-                  onTap: () {
-                    _showEditPatientDialog(context, patient: patient);
+                title: Text(patient.name!),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    _showDeletePatientDiaglog(context, patient: patient);
                   },
-                  title: Text(patient.name!),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () {
-                      patientManager.deletePatient(patient.id!);
-                      //TODO: Implement dialog
-                    },
-                  ),
-                  subtitle: Text(
-                    "Sinh năm ${patient.year}. Giới tính: ${genderDisplayStringMap[patient.gender]}",
-                  ),
+                ),
+                subtitle: Text(
+                  "Sinh năm ${patient.year}. Giới tính: ${genderDisplayStringMap[patient.gender]}",
                 ),
               );
             },
@@ -281,7 +390,7 @@ class _PatientScreenState extends State<PatientScreen> {
       body: patients.isEmpty
           ? Center(
               child: Text(
-                "Không có người bệnh",
+                "Danh sách trống",
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),

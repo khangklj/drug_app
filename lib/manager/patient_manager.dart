@@ -65,6 +65,10 @@ class PatientManager with ChangeNotifier {
     _errorMessage = '';
   }
 
+  Patient? findPatientById(String? id) {
+    return _patients.firstWhereOrNull((patient) => patient.id == id);
+  }
+
   Patient? findPatientByName(String name) {
     return _patients.firstWhereOrNull(
       (patient) => patient.name!.toLowerCase() == name.toLowerCase(),

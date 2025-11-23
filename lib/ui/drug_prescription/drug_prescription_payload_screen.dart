@@ -1,8 +1,10 @@
 import 'package:drug_app/manager/drug_manager.dart';
 import 'package:drug_app/manager/drug_prescription_manager.dart';
+import 'package:drug_app/manager/patient_manager.dart';
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
+import 'package:drug_app/models/patient.dart';
 import 'package:drug_app/ui/components/medi_app_drawer.dart';
 import 'package:drug_app/ui/drug/drug_details_screen.dart';
 import 'package:drug_app/ui/medi_app_homepage_screen.dart';
@@ -10,11 +12,75 @@ import 'package:drug_app/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class DrugPrescriptionPayloadScreen extends StatelessWidget {
+class DrugPrescriptionPayloadScreen extends StatefulWidget {
   const DrugPrescriptionPayloadScreen({super.key, required this.timeOfDay});
 
   static const routeName = "/drug_prescription_payload";
   final TimeOfDayValues timeOfDay;
+
+  @override
+  State<DrugPrescriptionPayloadScreen> createState() =>
+      _DrugPrescriptionPayloadScreenState();
+}
+
+class _DrugPrescriptionPayloadScreenState
+    extends State<DrugPrescriptionPayloadScreen> {
+  Patient? _filterPatient;
+
+  final _filterPatientTextController = TextEditingController();
+
+  Future<Patient?> showFilterByPatientDialog(
+    BuildContext context,
+    List<Patient> patients,
+  ) async {
+    Patient? selectedValue = _filterPatient;
+    return showDialog<Patient>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Lọc theo người bệnh"),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return SizedBox(
+                height: 3 * 60,
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  trackVisibility: true,
+                  child: SingleChildScrollView(
+                    child: RadioGroup<Patient?>(
+                      groupValue: selectedValue,
+                      onChanged: (value) =>
+                          setState(() => selectedValue = value),
+                      child: Column(
+                        children: [
+                          RadioListTile<Patient?>(
+                            title: Text("Tất cả"),
+                            value: null,
+                          ),
+                          ...patients.map((patient) {
+                            return RadioListTile<Patient?>(
+                              title: Text(patient.name!),
+                              value: patient,
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, selectedValue),
+              child: const Text("Chọn"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,10 +115,14 @@ class DrugPrescriptionPayloadScreen extends StatelessWidget {
           builder: (context, manager, child) {
             final dpList = manager.drugPrescriptions
                 .where((dp) => dp.isActive)
+                .where((dp) {
+                  if (_filterPatient == null) return true;
+                  return dp.patient!.id == _filterPatient?.id;
+                })
                 .toList();
             final isEmptyAll = dpList.every(
               (dp) => dp.items
-                  .where((dpItem) => dpItem.timeOfDay == timeOfDay)
+                  .where((dpItem) => dpItem.timeOfDay == widget.timeOfDay)
                   .toList()
                   .isEmpty,
             );
@@ -65,11 +135,55 @@ class DrugPrescriptionPayloadScreen extends StatelessWidget {
                   Align(
                     alignment: Alignment.center,
                     child: Text(
-                      "Danh sách thuốc buổi ${timeOfDay.toDisplayString().toLowerCase()}",
+                      "Danh sách thuốc buổi ${widget.timeOfDay.toDisplayString().toLowerCase()}",
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.filter_list_alt),
+                        const SizedBox(width: 5),
+                        Text(
+                          "Bộ lọc",
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Consumer<PatientManager>(
+                    builder: (context, patientManager, child) {
+                      return TextField(
+                        controller: _filterPatientTextController,
+                        readOnly: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Người bệnh',
+                          suffixIcon: Icon(Icons.person),
+                        ),
+
+                        onTap: () async {
+                          _filterPatient = await showFilterByPatientDialog(
+                            context,
+                            patientManager.patients,
+                          );
+                          if (_filterPatient == null) {
+                            // All is selected
+                            _filterPatientTextController.text = 'Tất cả';
+                          } else {
+                            _filterPatientTextController.text =
+                                _filterPatient!.name!;
+                          }
+                          setState(() {});
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(thickness: 5, indent: 40, endIndent: 40),
+                  const SizedBox(height: 12),
                   if (isEmptyAll) ...[
                     Text(
                       "Không tìm thấy danh sách thuốc",
@@ -87,7 +201,7 @@ class DrugPrescriptionPayloadScreen extends StatelessWidget {
                       itemBuilder: (context, index) {
                         return DrugPrescriptionCheckBoxWidget(
                           drugPrescription: dpList[index],
-                          timeOfDay: timeOfDay,
+                          timeOfDay: widget.timeOfDay,
                         );
                       },
                     ),
@@ -165,6 +279,9 @@ class _DrugPrescriptionCheckBoxWidgetState
             widget.drugPrescription.customName!,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleMedium,
+          ),
+          subtitle: Text(
+            "của ${widget.drugPrescription.patient!.name!} - ${widget.drugPrescription.patient!.year!}",
           ),
           value: parentValue,
           onChanged: toggleParent,

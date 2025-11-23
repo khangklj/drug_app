@@ -7,11 +7,13 @@ import 'package:drug_app/manager/notification_manager.dart';
 import 'package:drug_app/manager/patient_manager.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
+import 'package:drug_app/models/patient.dart';
 import 'package:drug_app/services/ocr_service.dart';
 import 'package:drug_app/ui/components/medi_app_loading_dialog.dart';
 import 'package:drug_app/ui/components/medi_app_drawer.dart';
 import 'package:drug_app/ui/components/medi_app_modal_bottom_sheet_icon.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_edit_screen.dart';
+import 'package:drug_app/ui/patient/patient_screen.dart';
 import 'package:drug_app/ui/settings_screen.dart';
 import 'package:drug_app/utils.dart';
 import 'package:flutter/gestures.dart';
@@ -20,7 +22,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
-enum FilterDrugPrescriptionOptions { all, active, notActive }
+enum FilterDrugPrescriptionOptions { all, active, inActive }
 
 enum SortDrugPrescriptionOptions { nameAZ, nameZA }
 
@@ -49,13 +51,15 @@ class DrugPrescriptionScreen extends StatefulWidget {
 class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
   late SortDrugPrescriptionOptions _sortOption;
   late FilterDrugPrescriptionOptions _filterOption;
-  bool _dialogShown = false;
+  Patient? _filterPatient;
+  final _filterPatientTextController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _sortOption = SortDrugPrescriptionOptions.nameAZ;
     _filterOption = FilterDrugPrescriptionOptions.all;
+    _filterPatientTextController.text = "Tất cả";
   }
 
   void _showAddingOptions() {
@@ -169,7 +173,7 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
   List<DrugPrescription> _applySortAndFilter(
     List<DrugPrescription> original, {
     required SortDrugPrescriptionOptions sortOption,
-    required FilterDrugPrescriptionOptions filterOption,
+    required FilterDrugPrescriptionOptions activeFilterStatusOption,
   }) {
     final List<DrugPrescription> newList = original
         .sorted((a, b) {
@@ -184,17 +188,76 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
         })
         .where((dp) {
           // Filter
-          if (filterOption == FilterDrugPrescriptionOptions.active) {
+          if (activeFilterStatusOption ==
+              FilterDrugPrescriptionOptions.active) {
             return dp.isActive;
-          } else if (filterOption == FilterDrugPrescriptionOptions.notActive) {
+          } else if (activeFilterStatusOption ==
+              FilterDrugPrescriptionOptions.inActive) {
             return !dp.isActive;
           } else {
             return true;
           }
         })
+        .where((dp) {
+          if (_filterPatient == null) return true;
+          return dp.patient!.id == _filterPatient!.id;
+        })
         .toList();
 
     return newList;
+  }
+
+  Future<Patient?> _showFilterByPatientDialog(
+    BuildContext context,
+    List<Patient> patients,
+  ) async {
+    Patient? selectedValue = _filterPatient;
+    return showDialog<Patient>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Lọc theo người bệnh"),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return SizedBox(
+                height: 3 * 60,
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  trackVisibility: true,
+                  child: SingleChildScrollView(
+                    child: RadioGroup<Patient?>(
+                      groupValue: selectedValue,
+                      onChanged: (value) =>
+                          setState(() => selectedValue = value),
+                      child: Column(
+                        children: [
+                          RadioListTile<Patient?>(
+                            title: Text("Tất cả"),
+                            value: null,
+                          ),
+                          ...patients.map((patient) {
+                            return RadioListTile<Patient?>(
+                              title: Text(patient.name!),
+                              value: patient,
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, selectedValue),
+              child: const Text("Chọn"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -203,29 +266,16 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
         .watch<DrugPrescriptionManager>()
         .drugPrescriptions;
     final patients = context.watch<PatientManager>().patients;
+
     final sortedAndFilteredDPs = _applySortAndFilter(
       drugPrescriptions,
       sortOption: _sortOption,
-      filterOption: _filterOption,
+      activeFilterStatusOption: _filterOption,
     );
     final activeDPs = sortedAndFilteredDPs.where((dp) => dp.isActive).toList();
     final inactiveDPs = sortedAndFilteredDPs
         .where((dp) => !dp.isActive)
         .toList();
-
-    if (patients.isEmpty && !_dialogShown) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _dialogShown = true;
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              // TODO: Implement dialog to navigate to patient screen
-            );
-          },
-        );
-      });
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -240,14 +290,6 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
               });
             },
           ),
-          FilterDPPopUpMenuButton(
-            filterOption: _filterOption,
-            onSelected: (value) {
-              setState(() {
-                _filterOption = value;
-              });
-            },
-          ),
         ],
       ),
       drawer: MediAppDrawer(),
@@ -257,156 +299,263 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
         },
         child: const Icon(Icons.add),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Consumer<NotificationManager>(
-              builder: (context, manager, child) {
-                if (!manager.notificationStatus.isGranted) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: RichText(
+      body: patients.isEmpty
+          ? Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Text(
+                      "Chưa có người bệnh\n Vui lòng thêm người bệnh trước khi dùng chức năng này",
                       textAlign: TextAlign.center,
-                      text: TextSpan(
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.arrow_right_alt),
+                      label: Text("Chuyển đến trang"),
+                      onPressed: () {
+                        Navigator.of(
+                          context,
+                        ).popAndPushNamed(PatientScreen.routeName);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: Column(
+                  children: [
+                    Consumer<NotificationManager>(
+                      builder: (context, manager, child) {
+                        if (!manager.notificationStatus.isGranted) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: "⚠️ Thông báo chưa được bật!\nVào ",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium!
+                                        .copyWith(height: 1.6),
+                                  ),
+                                  TextSpan(
+                                    text: "cài đặt",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium!
+                                        .copyWith(
+                                          color: Colors.blue,
+                                          decoration: TextDecoration.underline,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.of(
+                                          context,
+                                        ).pushNamed(SettingsScreen.routeName);
+                                      },
+                                  ),
+                                  TextSpan(
+                                    text: " để bật thông báo.",
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        const Icon(Icons.filter_list_alt),
+                        const SizedBox(width: 5),
+                        Text(
+                          "Bộ lọc",
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    DropdownMenu(
+                      width: double.infinity,
+                      label: const Text("Trạng thái theo dõi"),
+                      initialSelection: _filterOption,
+                      dropdownMenuEntries: [
+                        DropdownMenuEntry(
+                          label: "Tất cả",
+                          value: FilterDrugPrescriptionOptions.all,
+                          trailingIcon:
+                              _filterOption == FilterDrugPrescriptionOptions.all
+                              ? const Icon(Icons.check)
+                              : null,
+                        ),
+                        DropdownMenuEntry(
+                          label: "Đang theo dõi",
+                          value: FilterDrugPrescriptionOptions.active,
+                          trailingIcon:
+                              _filterOption ==
+                                  FilterDrugPrescriptionOptions.active
+                              ? const Icon(Icons.check)
+                              : null,
+                        ),
+                        DropdownMenuEntry(
+                          label: "Không theo dõi",
+                          value: FilterDrugPrescriptionOptions.inActive,
+                          trailingIcon:
+                              _filterOption ==
+                                  FilterDrugPrescriptionOptions.inActive
+                              ? const Icon(Icons.check)
+                              : null,
+                        ),
+                      ],
+                      onSelected: (value) {
+                        setState(() {
+                          _filterOption = value!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: _filterPatientTextController,
+                      readOnly: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Người bệnh',
+                        suffixIcon: Icon(Icons.person),
+                      ),
+
+                      onTap: () async {
+                        _filterPatient = await _showFilterByPatientDialog(
+                          context,
+                          patients,
+                        );
+                        if (_filterPatient == null) {
+                          // All is selected
+                          _filterPatientTextController.text = 'Tất cả';
+                        } else {
+                          _filterPatientTextController.text =
+                              _filterPatient!.name!;
+                        }
+                        setState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    const Divider(thickness: 5, indent: 40, endIndent: 40),
+                    const SizedBox(height: 12),
+                    if (_filterOption == FilterDrugPrescriptionOptions.all) ...[
+                      ExpansionTile(
+                        initiallyExpanded: true,
+                        shape: const Border(),
+                        trailing: const Icon(Icons.add),
+                        title: Text(
+                          "--- Đang theo dõi (${activeDPs.length})",
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         children: [
-                          TextSpan(
-                            text: "⚠️ Thông báo chưa được bật!\nVào ",
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium!.copyWith(height: 1.6),
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: activeDPs.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final drugPrescription = activeDPs[index];
+                              final groupedDPItems = groupDPItemsByTimeOfDay(
+                                drugPrescription,
+                              );
+                              return ExpansionTileDrugPrescription(
+                                drugPrescription: drugPrescription,
+                                groupedDPItems: groupedDPItems,
+                              );
+                            },
                           ),
-                          TextSpan(
-                            text: "cài đặt",
-                            style: Theme.of(context).textTheme.bodyMedium!
-                                .copyWith(
-                                  color: Colors.blue,
-                                  decoration: TextDecoration.underline,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                Navigator.of(
-                                  context,
-                                ).pushNamed(SettingsScreen.routeName);
-                              },
-                          ),
-                          TextSpan(
-                            text: " để bật thông báo.",
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
+
+                          if (activeDPs.isEmpty) ...[
+                            Text(
+                              "Không có toa thuốc nào thuộc mục này",
+                              style: Theme.of(context).textTheme.bodyMedium!
+                                  .copyWith(fontStyle: FontStyle.italic),
+                            ),
+                          ],
                         ],
                       ),
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
+
+                      ExpansionTile(
+                        initiallyExpanded: true,
+                        shape: const Border(),
+                        trailing: const Icon(Icons.add),
+                        title: Text(
+                          "--- Không theo dõi (${inactiveDPs.length})",
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        children: [
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: inactiveDPs.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final drugPrescription = inactiveDPs[index];
+                              final groupedDPItems = groupDPItemsByTimeOfDay(
+                                drugPrescription,
+                              );
+                              return ExpansionTileDrugPrescription(
+                                drugPrescription: drugPrescription,
+                                groupedDPItems: groupedDPItems,
+                              );
+                            },
+                          ),
+
+                          if (inactiveDPs.isEmpty) ...[
+                            Text(
+                              "Không có toa thuốc nào thuộc mục này",
+                              style: Theme.of(context).textTheme.bodyMedium!
+                                  .copyWith(fontStyle: FontStyle.italic),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ] else ...[
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: sortedAndFilteredDPs.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final drugPrescription = sortedAndFilteredDPs[index];
+                          final groupedDPItems = groupDPItemsByTimeOfDay(
+                            drugPrescription,
+                          );
+                          return ExpansionTileDrugPrescription(
+                            drugPrescription: drugPrescription,
+                            groupedDPItems: groupedDPItems,
+                          );
+                        },
+                      ),
+
+                      if (sortedAndFilteredDPs.isEmpty) ...[
+                        Text(
+                          "Không có toa thuốc nào thuộc mục này",
+                          style: Theme.of(context).textTheme.bodyMedium!
+                              .copyWith(fontStyle: FontStyle.italic),
+                        ),
+                      ],
+                    ],
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
-            if (_filterOption == FilterDrugPrescriptionOptions.all) ...[
-              ExpansionTile(
-                initiallyExpanded: true,
-                shape: const Border(),
-                trailing: const Icon(Icons.add),
-                title: Text(
-                  "--- Đang theo dõi (${activeDPs.length})",
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                children: [
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: activeDPs.length,
-                    separatorBuilder: (context, index) => const Divider(),
-                    itemBuilder: (context, index) {
-                      final drugPrescription = activeDPs[index];
-                      final groupedDPItems = groupDPItemsByTimeOfDay(
-                        drugPrescription,
-                      );
-                      return ExpansionTileDrugPrescription(
-                        drugPrescription: drugPrescription,
-                        groupedDPItems: groupedDPItems,
-                      );
-                    },
-                  ),
-
-                  if (activeDPs.isEmpty) ...[
-                    Text(
-                      "Không có toa thuốc nào thuộc mục này",
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-
-              ExpansionTile(
-                initiallyExpanded: true,
-                shape: const Border(),
-                trailing: const Icon(Icons.add),
-                title: Text(
-                  "--- Không theo dõi (${inactiveDPs.length})",
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                children: [
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: inactiveDPs.length,
-                    separatorBuilder: (context, index) => const Divider(),
-                    itemBuilder: (context, index) {
-                      final drugPrescription = inactiveDPs[index];
-                      final groupedDPItems = groupDPItemsByTimeOfDay(
-                        drugPrescription,
-                      );
-                      return ExpansionTileDrugPrescription(
-                        drugPrescription: drugPrescription,
-                        groupedDPItems: groupedDPItems,
-                      );
-                    },
-                  ),
-
-                  if (inactiveDPs.isEmpty) ...[
-                    Text(
-                      "Không có toa thuốc nào thuộc mục này",
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ] else ...[
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: sortedAndFilteredDPs.length,
-                separatorBuilder: (context, index) => const Divider(),
-                itemBuilder: (context, index) {
-                  final drugPrescription = sortedAndFilteredDPs[index];
-                  final groupedDPItems = groupDPItemsByTimeOfDay(
-                    drugPrescription,
-                  );
-                  return ExpansionTileDrugPrescription(
-                    drugPrescription: drugPrescription,
-                    groupedDPItems: groupedDPItems,
-                  );
-                },
-              ),
-
-              if (sortedAndFilteredDPs.isEmpty) ...[
-                Text(
-                  "Không có toa thuốc nào thuộc mục này",
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium!.copyWith(fontStyle: FontStyle.italic),
-                ),
-              ],
-            ],
-          ],
-        ),
-      ),
     );
   }
 }
@@ -457,64 +606,6 @@ class SortDPPopUpMenuButton extends StatelessWidget {
   }
 }
 
-class FilterDPPopUpMenuButton extends StatelessWidget {
-  const FilterDPPopUpMenuButton({
-    super.key,
-    required FilterDrugPrescriptionOptions filterOption,
-    required this.onSelected,
-  }) : _filterOption = filterOption;
-
-  final FilterDrugPrescriptionOptions _filterOption;
-  final void Function(FilterDrugPrescriptionOptions) onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton(
-      initialValue: _filterOption,
-      onSelected: onSelected,
-      icon: const Icon(Icons.filter_alt_outlined),
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          value: FilterDrugPrescriptionOptions.all,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Tất cả"),
-              if (_filterOption == FilterDrugPrescriptionOptions.all) ...[
-                Icon(Icons.check),
-              ],
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: FilterDrugPrescriptionOptions.active,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Đang theo dõi"),
-              if (_filterOption == FilterDrugPrescriptionOptions.active) ...[
-                Icon(Icons.check),
-              ],
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: FilterDrugPrescriptionOptions.notActive,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Không theo dõi"),
-              if (_filterOption == FilterDrugPrescriptionOptions.notActive) ...[
-                Icon(Icons.check),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class ExpansionTileDrugPrescription extends StatelessWidget {
   const ExpansionTileDrugPrescription({
     super.key,
@@ -529,6 +620,12 @@ class ExpansionTileDrugPrescription extends StatelessWidget {
   Widget build(BuildContext context) {
     return ExpansionTile(
       title: Text(drugPrescription.customName!),
+      subtitle: Text(
+        "của ${drugPrescription.patient!.name!}, ${drugPrescription.patient!.year!}",
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium!.copyWith(fontStyle: FontStyle.italic),
+      ),
       childrenPadding: const EdgeInsets.only(left: 4.0),
       children: [
         ...TimeOfDayValues.values.map((timeOfDay) {
@@ -545,6 +642,7 @@ class ExpansionTileDrugPrescription extends StatelessWidget {
             leading: const Icon(Icons.add),
             controlAffinity: ListTileControlAffinity.leading,
             title: Text(timeOfDayTitle),
+            shape: Border(),
             children: [
               Table(
                 columnWidths: const {

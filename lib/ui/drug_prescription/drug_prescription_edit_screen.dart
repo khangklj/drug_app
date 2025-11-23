@@ -499,7 +499,9 @@ class _DrugPrescriptionEditScreenState
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        initialSelection: drugPrescription.patient,
+                        initialSelection: patientManger.findPatientById(
+                          drugPrescription.patient?.id,
+                        ),
                         dropdownMenuEntries: [
                           for (final patient in patientManger.patients)
                             DropdownMenuEntry(

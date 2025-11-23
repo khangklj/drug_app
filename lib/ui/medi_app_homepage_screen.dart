@@ -17,6 +17,7 @@ import 'package:drug_app/ui/drug/drug_search_results_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_edit_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_payload_screen.dart';
 import 'package:drug_app/ui/drug_prescription/drug_prescription_screen.dart';
+import 'package:drug_app/ui/patient/patient_screen.dart';
 import 'package:drug_app/ui/settings_screen.dart';
 import 'package:drug_app/utils.dart';
 import 'package:flutter/material.dart';
@@ -498,6 +499,20 @@ class _MediAppHomepageScreenState extends State<MediAppHomepageScreen> {
                                   Navigator.of(
                                     context,
                                   ).pushNamed(DrugPrescriptionScreen.routeName);
+                                },
+                              ),
+                              MediAppIconEntry(
+                                icon: const Icon(Icons.person_outline),
+                                iconBGColor: Colors.blue.shade500,
+                                text: Text(
+                                  "Danh sách\nngười bệnh",
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                onTap: () {
+                                  Navigator.of(
+                                    context,
+                                  ).pushNamed(PatientScreen.routeName);
                                 },
                               ),
                               MediAppIconEntry(

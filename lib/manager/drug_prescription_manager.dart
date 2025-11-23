@@ -1,5 +1,6 @@
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
+import 'package:drug_app/models/patient.dart';
 import 'package:drug_app/services/drug_prescription_service.dart';
 import 'package:drug_app/utils.dart';
 import 'package:flutter/material.dart';
@@ -85,5 +86,11 @@ class DrugPrescriptionManager with ChangeNotifier {
       }
     }
     return timeOfDays;
+  }
+
+  List<DrugPrescription> findDrugPrescriptionByPatient(Patient patient) {
+    return _drugPrescriptionList
+        .where((dp) => dp.patient!.id == patient.id)
+        .toList();
   }
 }
