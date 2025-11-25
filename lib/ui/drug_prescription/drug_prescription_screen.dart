@@ -63,7 +63,8 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
     _filterPatientTextController.text = "Tất cả";
   }
 
-  void _showAddingOptions() {
+  /// paitents: for searching patient in OCR
+  void _showAddingOptions({List<Patient>? patients}) {
     void handlePickedFile(File? file) async {
       if (file != null && mounted) {
         showDialog(
@@ -73,9 +74,10 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
             return const MediAppLoadingDialog();
           },
         );
-        // List<DrugPrescriptionItem>? dpItems = await OcrService()
-        //     .postDrugPrescriptionImage(file);
-        final dp = await OcrService().postDrugPrescriptionImage(file);
+        final dp = await OcrService().postDrugPrescriptionImage(
+          file,
+          patients: patients,
+        );
         if (dp == null) {
           if (mounted) {
             Navigator.of(context).pop();
@@ -96,13 +98,6 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
           }
           return;
         }
-        // DrugPrescription newDP = DrugPrescription(
-        //   id: null,
-        //   customName: null,
-        //   deviceId: null,
-        //   isActive: true,
-        //   items: dpItems,
-        // );
         if (mounted) {
           Navigator.of(context).popAndPushNamed(
             DrugPrescriptionEditScreen.routeName,
@@ -231,7 +226,7 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
       drawer: MediAppDrawer(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _showAddingOptions();
+          _showAddingOptions(patients: patients);
         },
         child: const Icon(Icons.add),
       ),

@@ -352,7 +352,7 @@ class _DrugPrescriptionEditScreenState
                         dialogType: DialogType.error,
                         animType: AnimType.scale,
                         title: 'Lỗi nhập liệu',
-                        desc: 'Vui lòng nhập thông tin toa thuốc.',
+                        desc: 'Vui lòng nhập đúng thông tin toa thuốc.',
                         btnOkOnPress: () {},
                         btnOkIcon: Icons.check_circle,
                         btnCancel: null,
@@ -598,15 +598,32 @@ class _DrugPrescriptionEditScreenState
                 ),
 
                 const SizedBox(height: 20),
-                TextFormField(
-                  initialValue: drugPrescription.customName,
-                  decoration: const InputDecoration(labelText: 'Tên ghi nhớ'),
-                  onChanged: (value) {
-                    setState(() {
-                      drugPrescription = drugPrescription.copyWith(
-                        customName: value,
-                      );
-                    });
+                Consumer<DrugPrescriptionManager>(
+                  builder: (context, drugDPManager, child) {
+                    return TextFormField(
+                      autovalidateMode: AutovalidateMode.onUnfocus,
+                      initialValue: drugPrescription.customName,
+                      decoration: const InputDecoration(
+                        labelText: 'Tên ghi nhớ',
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          drugPrescription = drugPrescription.copyWith(
+                            customName: value,
+                          );
+                        });
+                      },
+                      validator: (value) {
+                        if (value != null &&
+                            value.isNotEmpty &&
+                            drugDPManager.drugPrescriptions.any((element) {
+                              return element.customName == value;
+                            })) {
+                          return 'Tên ghi nhớ này đã được sử dụng';
+                        }
+                        return null;
+                      },
+                    );
                   },
                 ),
 

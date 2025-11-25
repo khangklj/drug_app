@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/models/ocr_drug_label_model.dart';
+import 'package:drug_app/models/patient.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -46,7 +48,10 @@ class OcrService {
     }
   }
 
-  Future<DrugPrescription?> postDrugPrescriptionImage(File file) async {
+  Future<DrugPrescription?> postDrugPrescriptionImage(
+    File file, {
+    List<Patient>? patients,
+  }) async {
     final endpoint = '$_apiUrl/drug_prescription';
     try {
       final request = http.MultipartRequest('POST', Uri.parse(endpoint));
@@ -70,14 +75,20 @@ class OcrService {
         }
         final scheduledDate = DateFormat(
           "dd/MM/yyyy",
-        ).parse(data['scheduled_date']);
+        ).tryParse(data['scheduled_date'] ?? '');
+        final Patient? patient = patients?.firstWhereOrNull((patient) {
+          return patient.name!.toLowerCase() ==
+              (data['patient_name'] as String?)?.toLowerCase();
+        });
         data.addAll({
           "id": null,
           "custom_name": null,
           "device_id": null,
           "is_active": true,
           "items": dpItems,
-          "scheduled_date": scheduledDate.toString(),
+          "patient": patient,
+          "scheduled_date": scheduledDate?.toString(),
+          "active_date": null,
         });
         DrugPrescription dp = DrugPrescription.fromJson(data);
         return dp;

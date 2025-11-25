@@ -30,6 +30,7 @@ class _DrugPrescriptionPayloadScreenState
     extends State<DrugPrescriptionPayloadScreen> {
   late Patient? _filterPatient;
   late _SortDrugPrescriptionOptions _sortOption;
+  final Map<String, List<bool>> dpCheckedMap = {};
 
   @override
   void initState() {
@@ -278,9 +279,26 @@ class _DrugPrescriptionPayloadScreenState
                         const SizedBox(height: 30),
                     itemCount: dpList.length,
                     itemBuilder: (context, index) {
+                      final dp = dpList[index];
+
+                      // Initialize if not present
+                      dpCheckedMap.putIfAbsent(
+                        dp.id ?? index.toString(),
+                        () => List.filled(dp.items.length, false),
+                      );
                       return DrugPrescriptionCheckBoxWidget(
+                        key: ValueKey(dpList[index].id),
                         drugPrescription: dpList[index],
                         timeOfDay: widget.timeOfDay,
+
+                        checkedList: dpCheckedMap[dp.id ?? index.toString()]!,
+                        onChanged: (updatedChecked) {
+                          setState(() {
+                            dpCheckedMap[dp.id ?? index.toString()] = List.from(
+                              updatedChecked,
+                            );
+                          });
+                        },
                       );
                     },
                   ),
@@ -299,57 +317,48 @@ class _DrugPrescriptionPayloadScreenState
   }
 }
 
-class DrugPrescriptionCheckBoxWidget extends StatefulWidget {
+class DrugPrescriptionCheckBoxWidget extends StatelessWidget {
+  final DrugPrescription drugPrescription;
+  final TimeOfDayValues timeOfDay;
+  final List<bool> checkedList;
+  final ValueChanged<List<bool>> onChanged;
+
+  late final List<DrugPrescriptionItem> dpItems;
+
   DrugPrescriptionCheckBoxWidget({
     super.key,
     required this.drugPrescription,
     required this.timeOfDay,
-  }) : dpItems = drugPrescription.items
-           .where((dpItem) => dpItem.timeOfDay == timeOfDay)
-           .toList();
-  final DrugPrescription drugPrescription;
-  final TimeOfDayValues timeOfDay;
-  late final List<DrugPrescriptionItem> dpItems;
-
-  @override
-  State<DrugPrescriptionCheckBoxWidget> createState() =>
-      _DrugPrescriptionCheckBoxWidgetState();
-}
-
-class _DrugPrescriptionCheckBoxWidgetState
-    extends State<DrugPrescriptionCheckBoxWidget> {
-  late List<bool> dpItemsChecked;
-
-  @override
-  void initState() {
-    super.initState();
-    dpItemsChecked = List.filled(widget.dpItems.length, false);
+    required this.checkedList,
+    required this.onChanged,
+  }) {
+    dpItems = drugPrescription.items
+        .where((dpItem) => dpItem.timeOfDay == timeOfDay)
+        .toList();
   }
 
   bool? get parentValue {
-    if (dpItemsChecked.every((c) => c)) return true;
-    if (dpItemsChecked.every((c) => !c)) return false;
-    return null; // mixed state
+    if (checkedList.every((c) => c)) return true;
+    if (checkedList.every((c) => !c)) return false;
+    return null;
   }
 
   void toggleParent(bool? value) {
-    setState(() {
-      dpItemsChecked = List.filled(dpItemsChecked.length, value ?? false);
-    });
+    onChanged(List.filled(checkedList.length, value ?? false));
   }
 
   void toggleChild(int index, bool? value) {
-    setState(() {
-      dpItemsChecked[index] = value ?? false;
-    });
+    final newList = List<bool>.from(checkedList);
+    newList[index] = value ?? false;
+    onChanged(newList);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.dpItems.isEmpty) return const SizedBox.shrink();
+    if (dpItems.isEmpty) return const SizedBox.shrink();
 
     final numberOfDay = DateTime.now()
-        .difference(widget.drugPrescription.activeDate!)
+        .difference(drugPrescription.activeDate!)
         .inDays;
 
     return DecoratedBox(
@@ -363,7 +372,7 @@ class _DrugPrescriptionCheckBoxWidgetState
             dense: true,
             isThreeLine: true,
             title: Text(
-              widget.drugPrescription.customName!,
+              drugPrescription.customName ?? "",
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium,
             ),
@@ -373,7 +382,7 @@ class _DrugPrescriptionCheckBoxWidgetState
                 children: [
                   TextSpan(
                     text:
-                        "của ${widget.drugPrescription.patient!.name!} - ${widget.drugPrescription.patient!.year!}",
+                        "của ${drugPrescription.patient!.name!} - ${drugPrescription.patient!.year!}",
                     style: const TextStyle(fontStyle: FontStyle.italic),
                   ),
                   TextSpan(text: "\nĐã theo dõi được "),
@@ -391,78 +400,41 @@ class _DrugPrescriptionCheckBoxWidgetState
           Padding(
             padding: const EdgeInsets.only(left: 6.0),
             child: Column(
-              children: [
-                for (int index = 0; index < widget.dpItems.length; index++)
-                  Builder(
-                    builder: (context) {
-                      final dpItem = widget.dpItems[index];
-                      final drugManager = context.read<DrugManager>();
-                      final Drug? drug = dpItem.drugId == null
-                          ? null
-                          : drugManager.searchDrugMetadataById(dpItem.drugId!);
+              children: List.generate(dpItems.length, (index) {
+                final dpItem = dpItems[index];
+                final drugManager = context.read<DrugManager>();
+                final Drug? drug = dpItem.drugId == null
+                    ? null
+                    : drugManager.searchDrugMetadataById(dpItem.drugId!);
 
-                      return GestureDetector(
-                        onLongPress: () {
-                          if (drug == null) return;
-                          Navigator.of(context).pushNamed(
-                            DrugDetailsScreen.routeName,
-                            arguments: dpItem.drugId,
-                          );
-                        },
-                        child: CheckboxListTile(
-                          title: Text(
-                            dpItem.drugName,
-                            style: Theme.of(context).textTheme.bodyLarge!
-                                .copyWith(
-                                  color: dpItemsChecked[index]
-                                      ? Colors.white
-                                      : null,
-                                ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          visualDensity: VisualDensity.compact,
-                          subtitle: Text(
-                            "${formatDoubleNumberToString(dpItem.quantity!)} ${dpItem.measurement}",
-                            style: Theme.of(context).textTheme.bodyMedium!
-                                .copyWith(
-                                  color: dpItemsChecked[index]
-                                      ? Colors.white
-                                      : null,
-                                ),
-                          ),
-                          secondary: drug != null
-                              ? SizedBox(
-                                  width: 60,
-                                  height: 45,
-                                  child: Image.network(
-                                    drug.getImage(),
-                                    fit: BoxFit.fill,
-                                  ),
-                                )
-                              : SizedBox(
-                                  width: 60,
-                                  height: 45,
-                                  child: Container(),
-                                ),
-                          value: dpItemsChecked[index],
-                          onChanged: (value) {
-                            toggleChild(index, value);
-                          },
-                          selectedTileColor: Colors.blue.shade800,
-                          selected: dpItemsChecked[index],
-                          fillColor: WidgetStateProperty.resolveWith<Color>((
-                            states,
-                          ) {
-                            if (states.contains(WidgetState.selected)) {
-                              return Colors.green;
-                            }
-                            return Colors.transparent;
-                          }),
-                        ),
-                      );
-                    },
+                return GestureDetector(
+                  onLongPress: () {
+                    if (drug == null) return;
+                    Navigator.of(context).pushNamed(
+                      DrugDetailsScreen.routeName,
+                      arguments: dpItem.drugId,
+                    );
+                  },
+                  child: CheckboxListTile(
+                    title: Text(dpItem.drugName),
+                    subtitle: Text(
+                      "${formatDoubleNumberToString(dpItem.quantity!)} ${dpItem.measurement}",
+                    ),
+                    secondary: drug != null
+                        ? SizedBox(
+                            width: 60,
+                            height: 45,
+                            child: Image.network(
+                              drug.getImage(),
+                              fit: BoxFit.fill,
+                            ),
+                          )
+                        : SizedBox(width: 60, height: 45),
+                    value: checkedList[index],
+                    onChanged: (value) => toggleChild(index, value),
                   ),
-              ],
+                );
+              }),
             ),
           ),
         ],

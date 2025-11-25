@@ -74,8 +74,8 @@ class DrugPrescription {
       patient: json['patient'],
       diagnosis: json['diagnosis'],
       doctorName: json['doctor_name'],
-      scheduledDate: DateTime.parse(json['scheduled_date']),
-      activeDate: DateTime.parse(json['active_date']),
+      scheduledDate: DateTime.tryParse(json['scheduled_date'] ?? ''),
+      activeDate: DateTime.tryParse(json['active_date'] ?? ''),
     );
   }
 
