@@ -8,6 +8,7 @@ import 'package:drug_app/ui/components/medi_app_drawer.dart';
 import 'package:drug_app/ui/components/medi_app_loading_dialog.dart';
 import 'package:drug_app/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 class PatientScreen extends StatefulWidget {
@@ -53,8 +54,11 @@ class _PatientScreenState extends State<PatientScreen> {
                           autovalidateMode: AutovalidateMode.onUnfocus,
                           initialValue: patient?.name ?? "",
                           decoration: const InputDecoration(
-                            labelText: 'Họ và tên (*)',
+                            labelText: 'Họ và tên',
                           ),
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(50),
+                          ],
                           onChanged: (value) {
                             setState(() {
                               patient = patient!.copyWith(name: value);
@@ -64,6 +68,21 @@ class _PatientScreenState extends State<PatientScreen> {
                             if (value == null || value.isEmpty) {
                               return 'Vui lòng nhập họ và tên';
                             }
+                            if (patient?.id == null) {
+                              return patientManger.patients.any(
+                                    (patient) => patient.name == value,
+                                  )
+                                  ? 'Họ và tên đã được dùng'
+                                  : null;
+                            } else if (patient!.id != null) {
+                              return patientManger.patients.any(
+                                    (p) =>
+                                        p.name == value && p.id != patient!.id,
+                                  )
+                                  ? 'Họ và tên đã được dùng'
+                                  : null;
+                            }
+
                             return null;
                           },
                         ),

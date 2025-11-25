@@ -613,11 +613,13 @@ class _DrugPrescriptionEditScreenState
                           );
                         });
                       },
+                      inputFormatters: [LengthLimitingTextInputFormatter(30)],
                       validator: (value) {
                         if (value != null &&
                             value.isNotEmpty &&
                             drugDPManager.drugPrescriptions.any((element) {
-                              return element.customName == value;
+                              return element.customName == value &&
+                                  element.id != widget.drugPrescription.id;
                             })) {
                           return 'Tên ghi nhớ này đã được sử dụng';
                         }
@@ -683,11 +685,14 @@ class _DrugPrescriptionEditScreenState
                 const SizedBox(height: 20),
                 TextFormField(
                   keyboardType: TextInputType.multiline,
-                  maxLines: null,
+                  textInputAction: TextInputAction.newline,
+                  minLines: 1,
+                  maxLines: 4,
                   initialValue: drugPrescription.diagnosis,
                   decoration: const InputDecoration(
                     labelText: 'Chẩn đoán bệnh',
                   ),
+                  inputFormatters: [LengthLimitingTextInputFormatter(500)],
                   onChanged: (value) {
                     setState(() {
                       drugPrescription = drugPrescription.copyWith(
@@ -700,6 +705,7 @@ class _DrugPrescriptionEditScreenState
                 TextFormField(
                   initialValue: drugPrescription.doctorName,
                   decoration: const InputDecoration(labelText: 'Bác sĩ khám'),
+                  inputFormatters: [LengthLimitingTextInputFormatter(50)],
                   onChanged: (value) {
                     setState(() {
                       drugPrescription = drugPrescription.copyWith(
@@ -888,11 +894,7 @@ class _DrugPrescriptionEditScreenState
                   disabledBorder: InputBorder.none,
                   fillColor: Colors.transparent,
                 ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(
-                    RegExp(r'^[\p{L}\p{N}\p{P}\p{Zs}]+$', unicode: true),
-                  ),
-                ],
+                inputFormatters: [LengthLimitingTextInputFormatter(50)],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Vui lòng nhập tên thuốc';
@@ -928,11 +930,7 @@ class _DrugPrescriptionEditScreenState
                       disabledBorder: InputBorder.none,
                       fillColor: Colors.transparent,
                     ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'^[\p{L}\p{N}\p{P}\p{Zs}]+$', unicode: true),
-                      ),
-                    ],
+                    inputFormatters: [LengthLimitingTextInputFormatter(15)],
                     keyboardType: TextInputType.text,
                     validator: (value) {
                       if (value == null || value.isEmpty) {

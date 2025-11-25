@@ -2,10 +2,12 @@ import 'dart:io';
 
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:drug_app/manager/drug_manager.dart';
+import 'package:drug_app/manager/patient_manager.dart';
 import 'package:drug_app/models/drug.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
 import 'package:drug_app/models/ocr_drug_label_model.dart';
+import 'package:drug_app/models/patient.dart';
 import 'package:drug_app/services/ocr_service.dart';
 import 'package:drug_app/ui/components/medi_app_drawer.dart';
 import 'package:drug_app/ui/components/medi_app_loading_dialog.dart';
@@ -140,7 +142,7 @@ class _MediAppHomepageScreenState extends State<MediAppHomepageScreen> {
     );
   }
 
-  void _showScanningDrugPrescriptionOptions() {
+  void _showScanningDrugPrescriptionOptions({List<Patient>? patients}) {
     void handlePickedFile(File? file) async {
       if (file != null && mounted) {
         showDialog(
@@ -150,10 +152,9 @@ class _MediAppHomepageScreenState extends State<MediAppHomepageScreen> {
             return const MediAppLoadingDialog();
           },
         );
-        // List<DrugPrescriptionItem>? dpItems = await OcrService()
-        //     .postDrugPrescriptionImage(file);
         DrugPrescription? dp = await OcrService().postDrugPrescriptionImage(
           file,
+          patients: patients,
         );
         if (dp == null) {
           if (mounted) {
@@ -358,17 +359,27 @@ class _MediAppHomepageScreenState extends State<MediAppHomepageScreen> {
                                 ),
                                 onTap: _showScanningDrugLabelOptions,
                               ),
-                              MediAppIconEntry(
-                                icon: const Icon(
-                                  Icons.document_scanner_outlined,
-                                ),
-                                iconBGColor: Colors.blue.shade500,
-                                text: Text(
-                                  "Quét\ntoa thuốc",
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                  textAlign: TextAlign.center,
-                                ),
-                                onTap: _showScanningDrugPrescriptionOptions,
+                              Consumer<PatientManager>(
+                                builder: (context, patientManager, child) {
+                                  return MediAppIconEntry(
+                                    icon: const Icon(
+                                      Icons.document_scanner_outlined,
+                                    ),
+                                    iconBGColor: Colors.blue.shade500,
+                                    text: Text(
+                                      "Quét\ntoa thuốc",
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    onTap: () {
+                                      _showScanningDrugPrescriptionOptions(
+                                        patients: patientManager.patients,
+                                      );
+                                    },
+                                  );
+                                },
                               ),
                             ],
                           ),

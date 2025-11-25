@@ -161,24 +161,6 @@ class _DrugPrescriptionPayloadScreenState
                 .toList()
                 .isEmpty,
           );
-          if (isEmptyAll) {
-            return Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  Text(
-                    "Danh sách thuốc buổi ${widget.timeOfDay.toDisplayString().toLowerCase()}",
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text("Không tìm thấy danh sách thuốc"),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
           return SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(8.0),
@@ -193,8 +175,9 @@ class _DrugPrescriptionPayloadScreenState
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
-                  const SizedBox(height: 20),
-
+                  const SizedBox(height: 15),
+                  Text("💡 Tips: Nhấn giữ để xem thông tin thuốc"),
+                  const SizedBox(height: 15),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: Row(
@@ -272,41 +255,44 @@ class _DrugPrescriptionPayloadScreenState
                     ),
                   ),
                   const SizedBox(height: 18),
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 30),
-                    itemCount: dpList.length,
-                    itemBuilder: (context, index) {
-                      final dp = dpList[index];
+                  if (isEmptyAll) ...[
+                    Center(
+                      child: Text(
+                        "Không tìm thấy danh sách thuốc",
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ),
+                  ] else ...[
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 30),
+                      itemCount: dpList.length,
+                      itemBuilder: (context, index) {
+                        final dp = dpList[index];
 
-                      // Initialize if not present
-                      dpCheckedMap.putIfAbsent(
-                        dp.id ?? index.toString(),
-                        () => List.filled(dp.items.length, false),
-                      );
-                      return DrugPrescriptionCheckBoxWidget(
-                        key: ValueKey(dpList[index].id),
-                        drugPrescription: dpList[index],
-                        timeOfDay: widget.timeOfDay,
+                        // Initialize if not present
+                        dpCheckedMap.putIfAbsent(
+                          dp.id ?? index.toString(),
+                          () => List.filled(dp.items.length, false),
+                        );
+                        return DrugPrescriptionCheckBoxWidget(
+                          key: ValueKey(dpList[index].id),
+                          drugPrescription: dpList[index],
+                          timeOfDay: widget.timeOfDay,
 
-                        checkedList: dpCheckedMap[dp.id ?? index.toString()]!,
-                        onChanged: (updatedChecked) {
-                          setState(() {
-                            dpCheckedMap[dp.id ?? index.toString()] = List.from(
-                              updatedChecked,
-                            );
-                          });
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 15),
-                  Text(
-                    "💡 Tips: Nhấn giữ để xem thông tin thuốc",
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
+                          checkedList: dpCheckedMap[dp.id ?? index.toString()]!,
+                          onChanged: (updatedChecked) {
+                            setState(() {
+                              dpCheckedMap[dp.id ?? index.toString()] =
+                                  List.from(updatedChecked);
+                            });
+                          },
+                        );
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
