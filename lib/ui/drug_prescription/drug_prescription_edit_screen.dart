@@ -4,7 +4,6 @@ import 'package:drug_app/manager/drug_prescription_manager.dart';
 import 'package:drug_app/manager/patient_manager.dart';
 import 'package:drug_app/models/drug_prescription.dart';
 import 'package:drug_app/models/drug_prescription_item.dart';
-import 'package:drug_app/models/patient.dart';
 import 'package:drug_app/ui/components/medi_app_loading_dialog.dart';
 import 'package:drug_app/utils.dart';
 import 'package:flutter/material.dart';
@@ -110,9 +109,13 @@ class _DrugPrescriptionEditScreenState
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTopButton = false;
   bool _isSortAscending = false;
+  bool _showResetActiveDateSwitchTileWarning = false;
+  bool _showResetActiveDateButtonInfo = false;
 
   final TextEditingController _scheduledDateController =
       TextEditingController();
+
+  late final int? numberOfActiveDate;
 
   @override
   void initState() {
@@ -139,6 +142,12 @@ class _DrugPrescriptionEditScreenState
       'dd/MM/yyyy',
     ).format(scheduledDate);
     drugPrescription = drugPrescription.copyWith(scheduledDate: scheduledDate);
+
+    // Check if it is an active dp or a new dp then set numberOfActiveDate to null
+    numberOfActiveDate =
+        drugPrescription.isActive && drugPrescription.id != null
+        ? DateTime.now().difference(drugPrescription.activeDate!).inDays
+        : null;
   }
 
   @override
@@ -271,6 +280,11 @@ class _DrugPrescriptionEditScreenState
       customName = drugPrescription.customName;
     }
 
+    if (drugPrescription.isActive && !widget.drugPrescription.isActive ||
+        drugPrescription.id == null) {
+      drugPrescription = drugPrescription.copyWith(activeDate: DateTime.now());
+    }
+
     final DrugPrescription dp = DrugPrescription(
       id: drugPrescription.id,
       customName: customName,
@@ -281,6 +295,7 @@ class _DrugPrescriptionEditScreenState
       diagnosis: drugPrescription.diagnosis,
       doctorName: drugPrescription.doctorName,
       scheduledDate: drugPrescription.scheduledDate,
+      activeDate: drugPrescription.activeDate,
     );
 
     return dp;
@@ -451,22 +466,132 @@ class _DrugPrescriptionEditScreenState
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 20),
-                SwitchListTile(
-                  secondary: const Icon(Icons.watch_later_outlined),
-                  title: Text(
-                    "Bật chế độ theo dõi",
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  value: drugPrescription.isActive,
-                  onChanged: (value) {
-                    setState(() {
-                      drugPrescription = drugPrescription.copyWith(
-                        isActive: value,
-                      );
-                    });
-                  },
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SwitchListTile(
+                      dense: true,
+                      secondary: const Icon(Icons.watch_later_outlined),
+                      title: Text(
+                        "Bật chế độ theo dõi",
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      value: drugPrescription.isActive,
+                      onChanged: (value) {
+                        setState(() {
+                          drugPrescription = drugPrescription.copyWith(
+                            isActive: value,
+                          );
+
+                          // If it is a new dp, skip warning
+                          if (drugPrescription.id == null) {
+                            _showResetActiveDateSwitchTileWarning = false;
+                            return;
+                          }
+
+                          // Old active status is true -> display warning
+                          if (!drugPrescription.isActive &&
+                              widget.drugPrescription.isActive) {
+                            _showResetActiveDateSwitchTileWarning = true;
+                          } else if (drugPrescription.isActive &&
+                              widget.drugPrescription.isActive) {
+                            _showResetActiveDateSwitchTileWarning = false;
+                          }
+                        });
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
+                if (_showResetActiveDateSwitchTileWarning) ...[
+                  const SizedBox(height: 2),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      spacing: 5.0,
+                      children: [
+                        const Icon(Icons.warning_amber_outlined),
+                        Expanded(
+                          child: Text(
+                            "Tắt chế độ theo dõi sẽ đặt lại số ngày theo dõi",
+                            style: Theme.of(context).textTheme.bodyMedium!
+                                .copyWith(fontStyle: FontStyle.italic),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Display reset active date button
+                if (numberOfActiveDate != null) ...[
+                  const SizedBox(height: 15),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                style: Theme.of(context).textTheme.bodyLarge,
+                                children: [
+                                  TextSpan(text: "Đã theo dõi được "),
+                                  TextSpan(
+                                    text: "$numberOfActiveDate",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  TextSpan(text: " ngày"),
+                                ],
+                              ),
+                            ),
+                            TextButton.icon(
+                              icon: const Icon(Icons.restore),
+                              onPressed: () {
+                                setState(() {
+                                  {
+                                    drugPrescription = drugPrescription
+                                        .copyWith(activeDate: DateTime.now());
+                                    _showResetActiveDateButtonInfo = true;
+                                  }
+                                });
+                              },
+                              label: Text(
+                                "Đặt lại",
+                                style: Theme.of(context).textTheme.bodyLarge!
+                                    .copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_showResetActiveDateButtonInfo) ...[
+                          Row(
+                            spacing: 5.0,
+                            children: [
+                              const Icon(Icons.info_outline),
+                              Expanded(
+                                child: Text(
+                                  "Số ngày theo dõi sẽ được đặt lại sau khi lưu",
+                                  style: Theme.of(context).textTheme.bodyMedium!
+                                      .copyWith(fontStyle: FontStyle.italic),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 25),
                 Text(
                   "Các thông tin chung",
                   style: Theme.of(context).textTheme.titleMedium,
@@ -475,9 +600,7 @@ class _DrugPrescriptionEditScreenState
                 const SizedBox(height: 20),
                 TextFormField(
                   initialValue: drugPrescription.customName,
-                  decoration: const InputDecoration(
-                    labelText: 'Tên ghi nhớ (có thể bỏ trống)',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Tên ghi nhớ'),
                   onChanged: (value) {
                     setState(() {
                       drugPrescription = drugPrescription.copyWith(
@@ -490,40 +613,34 @@ class _DrugPrescriptionEditScreenState
                 const SizedBox(height: 20),
                 Consumer<PatientManager>(
                   builder: (context, patientManger, child) {
-                    return Align(
-                      alignment: Alignment.centerLeft,
-                      child: DropdownMenuFormField(
-                        width: double.infinity,
-                        label: const Text(
-                          'Họ và tên người bệnh',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        initialSelection: patientManger.findPatientById(
-                          drugPrescription.patient?.id,
-                        ),
-                        dropdownMenuEntries: [
-                          for (final patient in patientManger.patients)
-                            DropdownMenuEntry(
-                              label: patient.name!,
-                              value: patient,
-                            ),
-                        ],
-                        validator: (value) {
-                          if (value == null) {
-                            return 'Vui lòng chọn người bệnh';
-                          }
-                          return null;
-                        },
-                        onSelected: (value) {
-                          final patient = value as Patient;
-                          setState(() {
-                            drugPrescription = drugPrescription.copyWith(
-                              patient: patient,
-                            );
-                          });
-                        },
+                    return DropdownMenu(
+                      menuHeight: 200,
+                      enableSearch: true,
+                      enableFilter: true,
+                      requestFocusOnTap: true,
+                      width: double.infinity,
+                      label: const Text("Người bệnh"),
+                      initialSelection: patientManger.findPatientById(
+                        drugPrescription.patient?.id,
                       ),
+                      dropdownMenuEntries: [
+                        ...patientManger.patients.map((patient) {
+                          return DropdownMenuEntry(
+                            label: patient.name!,
+                            value: patient,
+                            trailingIcon: drugPrescription.patient == patient
+                                ? const Icon(Icons.check)
+                                : null,
+                          );
+                        }),
+                      ],
+                      onSelected: (value) {
+                        setState(() {
+                          drugPrescription = drugPrescription.copyWith(
+                            patient: value,
+                          );
+                        });
+                      },
                     );
                   },
                 ),

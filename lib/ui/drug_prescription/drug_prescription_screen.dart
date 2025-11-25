@@ -22,9 +22,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
-enum FilterDrugPrescriptionOptions { all, active, inActive }
+enum _FilterDrugPrescriptionOptions { all, active, inActive }
 
-enum SortDrugPrescriptionOptions { nameAZ, nameZA }
+enum _SortDrugPrescriptionOptions { nodAsc, nodDesc }
 
 Map<String, List<DrugPrescriptionItem>> groupDPItemsByTimeOfDay(
   DrugPrescription dp,
@@ -49,16 +49,17 @@ class DrugPrescriptionScreen extends StatefulWidget {
 }
 
 class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
-  late SortDrugPrescriptionOptions _sortOption;
-  late FilterDrugPrescriptionOptions _filterOption;
-  Patient? _filterPatient;
+  late _SortDrugPrescriptionOptions _sortOption;
+  late _FilterDrugPrescriptionOptions _filterOption;
+  late Patient? _filterPatient;
   final _filterPatientTextController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _sortOption = SortDrugPrescriptionOptions.nameAZ;
-    _filterOption = FilterDrugPrescriptionOptions.all;
+    _sortOption = _SortDrugPrescriptionOptions.nodAsc;
+    _filterOption = _FilterDrugPrescriptionOptions.all;
+    _filterPatient = null;
     _filterPatientTextController.text = "Tất cả";
   }
 
@@ -170,29 +171,18 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
     );
   }
 
-  List<DrugPrescription> _applySortAndFilter(
+  (List<DrugPrescription>, List<DrugPrescription>) _applySortAndFilter(
     List<DrugPrescription> original, {
-    required SortDrugPrescriptionOptions sortOption,
-    required FilterDrugPrescriptionOptions activeFilterStatusOption,
+    required _SortDrugPrescriptionOptions sortOption,
+    required _FilterDrugPrescriptionOptions filterStatusOption,
   }) {
     final List<DrugPrescription> newList = original
-        .sorted((a, b) {
-          // Sort
-          if (sortOption == SortDrugPrescriptionOptions.nameAZ) {
-            return a.customName!.compareTo(b.customName!);
-          } else if (sortOption == SortDrugPrescriptionOptions.nameZA) {
-            return b.customName!.compareTo(a.customName!);
-          } else {
-            return a.customName!.compareTo(b.customName!);
-          }
-        })
         .where((dp) {
           // Filter
-          if (activeFilterStatusOption ==
-              FilterDrugPrescriptionOptions.active) {
+          if (filterStatusOption == _FilterDrugPrescriptionOptions.active) {
             return dp.isActive;
-          } else if (activeFilterStatusOption ==
-              FilterDrugPrescriptionOptions.inActive) {
+          } else if (filterStatusOption ==
+              _FilterDrugPrescriptionOptions.inActive) {
             return !dp.isActive;
           } else {
             return true;
@@ -204,60 +194,18 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
         })
         .toList();
 
-    return newList;
-  }
+    final activeDPs = newList.where((dp) => dp.isActive).sorted((a, b) {
+      if (_sortOption == _SortDrugPrescriptionOptions.nodAsc) {
+        return b.activeDate!.compareTo(a.activeDate!);
+      } else if (_sortOption == _SortDrugPrescriptionOptions.nodDesc) {
+        return a.activeDate!.compareTo(b.activeDate!);
+      }
 
-  Future<Patient?> _showFilterByPatientDialog(
-    BuildContext context,
-    List<Patient> patients,
-  ) async {
-    Patient? selectedValue = _filterPatient;
-    return showDialog<Patient>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Lọc theo người bệnh"),
-          content: StatefulBuilder(
-            builder: (context, setState) {
-              return SizedBox(
-                height: 3 * 60,
-                child: Scrollbar(
-                  thumbVisibility: true,
-                  trackVisibility: true,
-                  child: SingleChildScrollView(
-                    child: RadioGroup<Patient?>(
-                      groupValue: selectedValue,
-                      onChanged: (value) =>
-                          setState(() => selectedValue = value),
-                      child: Column(
-                        children: [
-                          RadioListTile<Patient?>(
-                            title: Text("Tất cả"),
-                            value: null,
-                          ),
-                          ...patients.map((patient) {
-                            return RadioListTile<Patient?>(
-                              title: Text(patient.name!),
-                              value: patient,
-                            );
-                          }),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, selectedValue),
-              child: const Text("Chọn"),
-            ),
-          ],
-        );
-      },
-    );
+      return b.activeDate!.compareTo(a.activeDate!);
+    }).toList();
+    final inactiveDPs = newList.where((dp) => !dp.isActive).toList();
+
+    return (activeDPs, inactiveDPs);
   }
 
   @override
@@ -267,31 +215,19 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
         .drugPrescriptions;
     final patients = context.watch<PatientManager>().patients;
 
-    final sortedAndFilteredDPs = _applySortAndFilter(
+    final (activeDPs, inactiveDPs) = _applySortAndFilter(
       drugPrescriptions,
       sortOption: _sortOption,
-      activeFilterStatusOption: _filterOption,
+      filterStatusOption: _filterOption,
     );
-    final activeDPs = sortedAndFilteredDPs.where((dp) => dp.isActive).toList();
-    final inactiveDPs = sortedAndFilteredDPs
-        .where((dp) => !dp.isActive)
-        .toList();
+
+    final dpsListFilteredByStatus =
+        _filterOption == _FilterDrugPrescriptionOptions.active
+        ? activeDPs
+        : inactiveDPs;
 
     return Scaffold(
-      appBar: AppBar(
-        elevation: 4.0,
-        title: const Text("Quản lý toa thuốc"),
-        actions: [
-          SortDPPopUpMenuButton(
-            sortOption: _sortOption,
-            onSelected: (value) {
-              setState(() {
-                _sortOption = value;
-              });
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(elevation: 4.0, title: const Text("Quản lý toa thuốc")),
       drawer: MediAppDrawer(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -393,27 +329,28 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
                       dropdownMenuEntries: [
                         DropdownMenuEntry(
                           label: "Tất cả",
-                          value: FilterDrugPrescriptionOptions.all,
+                          value: _FilterDrugPrescriptionOptions.all,
                           trailingIcon:
-                              _filterOption == FilterDrugPrescriptionOptions.all
+                              _filterOption ==
+                                  _FilterDrugPrescriptionOptions.all
                               ? const Icon(Icons.check)
                               : null,
                         ),
                         DropdownMenuEntry(
                           label: "Đang theo dõi",
-                          value: FilterDrugPrescriptionOptions.active,
+                          value: _FilterDrugPrescriptionOptions.active,
                           trailingIcon:
                               _filterOption ==
-                                  FilterDrugPrescriptionOptions.active
+                                  _FilterDrugPrescriptionOptions.active
                               ? const Icon(Icons.check)
                               : null,
                         ),
                         DropdownMenuEntry(
                           label: "Không theo dõi",
-                          value: FilterDrugPrescriptionOptions.inActive,
+                          value: _FilterDrugPrescriptionOptions.inActive,
                           trailingIcon:
                               _filterOption ==
-                                  FilterDrugPrescriptionOptions.inActive
+                                  _FilterDrugPrescriptionOptions.inActive
                               ? const Icon(Icons.check)
                               : null,
                         ),
@@ -425,33 +362,67 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
                       },
                     ),
                     const SizedBox(height: 20),
-                    TextField(
-                      controller: _filterPatientTextController,
-                      readOnly: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Người bệnh',
-                        suffixIcon: Icon(Icons.person),
-                      ),
-
-                      onTap: () async {
-                        _filterPatient = await _showFilterByPatientDialog(
-                          context,
-                          patients,
-                        );
-                        if (_filterPatient == null) {
-                          // All is selected
-                          _filterPatientTextController.text = 'Tất cả';
-                        } else {
-                          _filterPatientTextController.text =
-                              _filterPatient!.name!;
-                        }
-                        setState(() {});
+                    DropdownMenu(
+                      menuHeight: 200,
+                      enableSearch: true,
+                      enableFilter: true,
+                      requestFocusOnTap: true,
+                      width: double.infinity,
+                      label: const Text("Người bệnh"),
+                      initialSelection: _filterPatient,
+                      dropdownMenuEntries: [
+                        DropdownMenuEntry(
+                          label: "Tất cả",
+                          value: null,
+                          trailingIcon: _filterPatient == null
+                              ? const Icon(Icons.check)
+                              : null,
+                        ),
+                        ...patients.map((patient) {
+                          return DropdownMenuEntry(
+                            label: patient.name!,
+                            value: patient,
+                            trailingIcon: _filterPatient == patient
+                                ? const Icon(Icons.check)
+                                : null,
+                          );
+                        }),
+                      ],
+                      onSelected: (value) {
+                        setState(() {
+                          _filterPatient = value;
+                        });
                       },
                     ),
-                    const SizedBox(height: 12),
-                    const Divider(thickness: 5, indent: 40, endIndent: 40),
-                    const SizedBox(height: 12),
-                    if (_filterOption == FilterDrugPrescriptionOptions.all) ...[
+                    const SizedBox(height: 6),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        children: [
+                          Expanded(child: const Divider(thickness: 5)),
+                          const SizedBox(width: 4),
+                          TextButton.icon(
+                            icon:
+                                _sortOption ==
+                                    _SortDrugPrescriptionOptions.nodAsc
+                                ? const Icon(Icons.arrow_upward)
+                                : const Icon(Icons.arrow_downward),
+                            label: Text("Số ngày theo dõi"),
+                            onPressed: () {
+                              setState(() {
+                                _sortOption =
+                                    _sortOption ==
+                                        _SortDrugPrescriptionOptions.nodAsc
+                                    ? _SortDrugPrescriptionOptions.nodDesc
+                                    : _SortDrugPrescriptionOptions.nodAsc;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (_filterOption ==
+                        _FilterDrugPrescriptionOptions.all) ...[
                       ExpansionTile(
                         initiallyExpanded: true,
                         shape: const Border(),
@@ -529,11 +500,12 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
                       ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: sortedAndFilteredDPs.length,
+                        itemCount: dpsListFilteredByStatus.length,
                         separatorBuilder: (context, index) =>
                             const SizedBox(height: 12),
                         itemBuilder: (context, index) {
-                          final drugPrescription = sortedAndFilteredDPs[index];
+                          final drugPrescription =
+                              dpsListFilteredByStatus[index];
                           final groupedDPItems = groupDPItemsByTimeOfDay(
                             drugPrescription,
                           );
@@ -544,7 +516,7 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
                         },
                       ),
 
-                      if (sortedAndFilteredDPs.isEmpty) ...[
+                      if (dpsListFilteredByStatus.isEmpty) ...[
                         Text(
                           "Không có toa thuốc nào thuộc mục này",
                           style: Theme.of(context).textTheme.bodyMedium!
@@ -556,52 +528,6 @@ class _DrugPrescriptionScreenState extends State<DrugPrescriptionScreen> {
                 ),
               ),
             ),
-    );
-  }
-}
-
-class SortDPPopUpMenuButton extends StatelessWidget {
-  const SortDPPopUpMenuButton({
-    super.key,
-    required SortDrugPrescriptionOptions sortOption,
-    required this.onSelected,
-  }) : _sortOption = sortOption;
-
-  final SortDrugPrescriptionOptions _sortOption;
-  final void Function(SortDrugPrescriptionOptions) onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton(
-      initialValue: _sortOption,
-      onSelected: onSelected,
-      icon: const Icon(Icons.sort),
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          value: SortDrugPrescriptionOptions.nameAZ,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Sắp xếp tên A-Z"),
-              if (_sortOption == SortDrugPrescriptionOptions.nameAZ) ...[
-                const Icon(Icons.check),
-              ],
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: SortDrugPrescriptionOptions.nameZA,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Sắp xếp tên Z-A"),
-              if (_sortOption == SortDrugPrescriptionOptions.nameZA) ...[
-                const Icon(Icons.check),
-              ],
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
@@ -618,14 +544,32 @@ class ExpansionTileDrugPrescription extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final int? numberOfDay = drugPrescription.isActive
+        ? DateTime.now().difference(drugPrescription.activeDate!).inDays
+        : null;
     return ExpansionTile(
       title: Text(drugPrescription.customName!),
-      subtitle: Text(
-        "của ${drugPrescription.patient!.name!}, ${drugPrescription.patient!.year!}",
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium!.copyWith(fontStyle: FontStyle.italic),
+      subtitle: RichText(
+        text: TextSpan(
+          style: Theme.of(context).textTheme.bodyMedium,
+          children: [
+            TextSpan(
+              text:
+                  "của ${drugPrescription.patient!.name!} - ${drugPrescription.patient!.year!}",
+              style: const TextStyle(fontStyle: FontStyle.italic),
+            ),
+            if (numberOfDay != null) ...[
+              TextSpan(text: "\nĐã theo dõi được "),
+              TextSpan(
+                text: "$numberOfDay ",
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              TextSpan(text: "ngày."),
+            ],
+          ],
+        ),
       ),
+
       childrenPadding: const EdgeInsets.only(left: 4.0),
       children: [
         ...TimeOfDayValues.values.map((timeOfDay) {

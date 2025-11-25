@@ -11,6 +11,7 @@ class DrugPrescription {
   final String? doctorName;
   final DateTime? scheduledDate;
   final Patient? patient;
+  final DateTime? activeDate;
 
   DrugPrescription({
     required this.id,
@@ -22,6 +23,7 @@ class DrugPrescription {
     this.doctorName,
     this.scheduledDate,
     this.patient,
+    this.activeDate,
   });
 
   DrugPrescription copyWith({
@@ -37,6 +39,7 @@ class DrugPrescription {
     String? doctorName,
     DateTime? scheduledDate,
     Patient? patient,
+    DateTime? activeDate,
   }) {
     return DrugPrescription(
       id: id ?? this.id,
@@ -48,6 +51,7 @@ class DrugPrescription {
       doctorName: doctorName ?? this.doctorName,
       scheduledDate: scheduledDate ?? this.scheduledDate,
       patient: patient ?? this.patient,
+      activeDate: activeDate ?? this.activeDate,
     );
   }
 
@@ -71,6 +75,7 @@ class DrugPrescription {
       diagnosis: json['diagnosis'],
       doctorName: json['doctor_name'],
       scheduledDate: DateTime.parse(json['scheduled_date']),
+      activeDate: DateTime.parse(json['active_date']),
     );
   }
 
@@ -82,5 +87,6 @@ class DrugPrescription {
     'diagnosis': diagnosis,
     'doctor_name': doctorName,
     'scheduled_date': scheduledDate!.toUtc().toIso8601String(),
+    'active_date': activeDate!.toUtc().toIso8601String(),
   };
 }
