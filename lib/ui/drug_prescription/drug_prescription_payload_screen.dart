@@ -415,7 +415,11 @@ class DrugPrescriptionCheckBoxWidget extends StatelessWidget {
                               fit: BoxFit.fill,
                             ),
                           )
-                        : SizedBox(width: 60, height: 45),
+                        : SizedBox(
+                            width: 60,
+                            height: 45,
+                            child: const Icon(Icons.image_outlined),
+                          ),
                     value: checkedList[index],
                     onChanged: (value) => toggleChild(index, value),
                   ),

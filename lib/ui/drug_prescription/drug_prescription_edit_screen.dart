@@ -401,7 +401,7 @@ class _DrugPrescriptionEditScreenState
 
                       AwesomeDialog(
                         context: context,
-                        dialogType: DialogType.info,
+                        dialogType: DialogType.success,
                         animType: AnimType.scale,
                         title: 'Lưu toa thuốc thành công',
                         btnOkOnPress: () {
@@ -834,7 +834,7 @@ class _DrugPrescriptionEditScreenState
 
                                   AwesomeDialog(
                                     context: context,
-                                    dialogType: DialogType.info,
+                                    dialogType: DialogType.success,
                                     animType: AnimType.scale,
                                     title: 'Xóa toa thuốc thành công',
                                     btnOkOnPress: () {

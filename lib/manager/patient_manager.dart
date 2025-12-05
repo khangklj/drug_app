@@ -19,7 +19,8 @@ class PatientManager with ChangeNotifier {
   }
 
   Future<void> fetchPatients() async {
-    _patients = await patientService.fetchPatients();
+    final deviceId = await getDeviceId();
+    _patients = await patientService.fetchPatients(deviceId: deviceId);
     notifyListeners();
   }
 

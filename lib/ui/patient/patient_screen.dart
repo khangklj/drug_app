@@ -90,7 +90,7 @@ class _PatientScreenState extends State<PatientScreen> {
                         Row(
                           children: [
                             Expanded(
-                              flex: 3,
+                              flex: 1,
                               child: DropdownMenuFormField(
                                 label: const Text('Giới tính'),
                                 initialSelection: patient?.gender ?? 'male',
@@ -113,7 +113,7 @@ class _PatientScreenState extends State<PatientScreen> {
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              flex: 4,
+                              flex: 1,
                               child: TextFormField(
                                 controller: _patientYearTextController,
                                 readOnly: true,
@@ -219,7 +219,7 @@ class _PatientScreenState extends State<PatientScreen> {
 
                         AwesomeDialog(
                           context: context,
-                          dialogType: DialogType.info,
+                          dialogType: DialogType.success,
                           animType: AnimType.scale,
                           title: isEditState
                               ? "Cập nhật thành công"
@@ -266,8 +266,7 @@ class _PatientScreenState extends State<PatientScreen> {
         dialogType: DialogType.warning,
         animType: AnimType.scale,
         title: 'Xóa người bệnh',
-        desc:
-            'Thao tác này sẽ xóa người bệnh khỏi ứng dụng. Bạn có muốn tiếp tục không?',
+        desc: 'Thao tác này sẽ xóa người bệnh khỏi ứng dụng. Tiếp tục xóa?',
         btnOkOnPress: () {
           completer.complete(true);
         },
@@ -292,14 +291,14 @@ class _PatientScreenState extends State<PatientScreen> {
         animType: AnimType.scale,
         title: 'Cảnh báo',
         desc:
-            'Hiện người bệnh này còn có $count toa thuốc. Tiếp tục sẽ xóa tất cả toa thuốc người này đang sử dụng.\nBạn chắc chắn chứ?',
+            'Hiện người bệnh này còn có $count toa thuốc.\nTiếp tục sẽ xóa tất cả toa thuốc người này đang sử dụng.',
         btnOkOnPress: () {
           completer.complete(true);
         },
         btnCancelOnPress: () {
           completer.complete(false);
         },
-        btnOkText: "Chắc chắn",
+        btnOkText: "Đồng ý",
         btnCancelText: "Hủy bỏ",
         btnOkIcon: Icons.check_circle,
         btnCancelIcon: Icons.cancel,

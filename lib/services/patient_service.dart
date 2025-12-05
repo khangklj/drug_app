@@ -5,11 +5,13 @@ import 'package:logger/logger.dart';
 class PatientService {
   var logger = Logger();
 
-  Future<List<Patient>> fetchPatients() async {
+  Future<List<Patient>> fetchPatients({required String deviceId}) async {
     final List<Patient> patients = [];
     try {
       final pb = await getPocketBaseInstance();
-      final recordList = await pb.collection('patient').getFullList();
+      final recordList = await pb
+          .collection('patient')
+          .getFullList(filter: "device_id = '$deviceId'");
       for (final record in recordList) {
         patients.add(Patient.fromJson(record.toJson()));
       }

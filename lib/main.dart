@@ -120,8 +120,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     ThemeMode themeMode = context.watch<SettingsManager>().themeMode;
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'MediApp',
       navigatorKey: globalNavigatorKey,
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
